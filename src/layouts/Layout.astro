@@ -1,0 +1,125 @@
+---
+import '../styles/global.css';
+---
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ali - System Architect</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Add particles.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+</head>
+<body class="digital-view">
+
+    <!-- Add a div for particles.js to attach to -->
+    <div id="particles-js"></div>
+
+    <div class="watermark">ARCHITECT</div>
+    <div class="container page">
+        <div class="content">
+            <slot />
+        </div>
+    </div>
+
+    <script>
+      // View Switcher Logic
+      const switcher = document.querySelector('.view-switcher');
+      const body = document.body;
+
+      switcher.addEventListener('click', () => {
+        if (body.classList.contains('digital-view')) {
+          body.classList.remove('digital-view');
+          body.classList.add('print-view');
+        } else {
+          body.classList.remove('print-view');
+          body.classList.add('digital-view');
+        }
+      });
+    </script>
+
+    <!-- Initialize particles.js -->
+    <script is:inline>
+      particlesJS('particles-js', {
+        "particles": {
+          "number": {
+            "value": 80,
+            "density": {
+              "enable": true,
+              "value_area": 800
+            }
+          },
+          "color": {
+            "value": "#00ff41"
+          },
+          "shape": {
+            "type": "circle",
+            "stroke": {
+              "width": 0,
+              "color": "#000000"
+            }
+          },
+          "opacity": {
+            "value": 0.3,
+            "random": true,
+            "anim": {
+              "enable": true,
+              "speed": 1,
+              "opacity_min": 0.05,
+              "sync": false
+            }
+          },
+          "size": {
+            "value": 2,
+            "random": true
+          },
+          "line_linked": {
+            "enable": true,
+            "distance": 150,
+            "color": "#00ff41",
+            "opacity": 0.1,
+            "width": 1
+          },
+          "move": {
+            "enable": true,
+            "speed": 1,
+            "direction": "none",
+            "random": false,
+            "straight": false,
+            "out_mode": "out",
+            "bounce": false
+          }
+        },
+        "interactivity": {
+          "detect_on": "canvas",
+          "events": {
+            "onhover": {
+              "enable": true,
+              "mode": "grab"
+            },
+            "onclick": {
+              "enable": true,
+              "mode": "push"
+            },
+            "resize": true
+          },
+          "modes": {
+            "grab": {
+              "distance": 140,
+              "line_opacity": 0.3
+            },
+            "push": {
+              "particles_nb": 4
+            }
+          }
+        },
+        "retina_detect": true
+      });
+    </script>
+</body>
+</html>
+

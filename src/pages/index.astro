@@ -1,0 +1,41 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Section from '../components/Section.astro';
+import ProjectEntry from '../components/ProjectEntry.astro';
+import Skills from '../components/Skills.astro';
+import Education from '../components/Education.astro';
+import profile from '../data/profile.json';
+---
+
+<Layout>
+    <Header />
+
+    <div class="execute-protocol">
+        <p class="terminal-command">$ ./contact --all</p>
+        <p class="comment">// Establishing secure connection...</p>
+        <p>Email: <a href={`mailto:${profile.personal.email}`}>{profile.personal.email}</a></p>
+        <p>LinkedIn: <a href={`https://${profile.personal.linkedin}`} target="_blank">{profile.personal.linkedin}</a></p>
+        <p>GitHub: <a href={`https://${profile.personal.github}`} target="_blank">{profile.personal.github}</a></p>
+        <p>System Log: <a href="/blog/">/blog/</a></p>
+    </div>
+
+    <Section title="PROJECT_MANIFEST">
+        {profile.projects.map(project => (
+            <ProjectEntry project={project} />
+        ))}
+    </Section>
+
+    <Section title="SKILL_MATRIX">
+        <Skills skills={profile.skills} />
+    </Section>
+
+    <Section title="EDUCATION_LOG">
+        <Education edu={profile.education} />
+    </Section>
+
+    <div class="checksum">
+        Document Checksum: {profile.checksum}
+    </div>
+</Layout>
+

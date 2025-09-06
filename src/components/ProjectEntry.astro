@@ -1,0 +1,23 @@
+---
+const { project } = Astro.props;
+const meta = `${project.status} | ${project.scale || project.security || project.performance || project.innovation}`;
+---
+
+<div class="entry">
+    <div class="entry-header">
+        <span class="entry-title">[{project.id}] {project.name}</span>
+        <span class="entry-meta">{meta}</span>
+    </div>
+    <p class="entry-description">{project.description}</p>
+    
+    <!-- Display Key Features -->
+    <div class="entry-description comment" style="margin-top: 5px;">
+        // Features: {project.features.join(', ')}
+    </div>
+
+    <!-- Display Tech Stack -->
+    <div class="tech-stack">
+        {project.stack.map(tech => <span class="tech-tag">{tech}</span>)}
+    </div>
+</div>
+
