@@ -1,5 +1,20 @@
 ---
-const { project } = Astro.props;
+interface Props {
+  project: {
+    id: string;
+    name: string;
+    description: string;
+    status: string;
+    scale?: string;
+    security?: string;
+    performance?: string;
+    innovation?: string;
+    features: string[];
+    stack: string[];
+  };
+}
+
+const { project } = Astro.props as Props;
 const meta = `${project.status} | ${project.scale || project.security || project.performance || project.innovation}`;
 ---
 
@@ -17,7 +32,7 @@ const meta = `${project.status} | ${project.scale || project.security || project
 
     <!-- Display Tech Stack -->
     <div class="tech-stack">
-        {project.stack.map(tech => <span class="tech-tag">{tech}</span>)}
+        {project.stack.map((tech: string) => <span class="tech-tag">{tech}</span>)}
     </div>
 </div>
 

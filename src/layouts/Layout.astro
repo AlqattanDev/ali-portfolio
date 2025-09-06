@@ -28,18 +28,20 @@ import '../styles/global.css';
 
     <script>
       // View Switcher Logic
-      const switcher = document.querySelector('.view-switcher');
+      const switcher = document.querySelector('.view-switcher') as HTMLElement | null;
       const body = document.body;
 
-      switcher.addEventListener('click', () => {
-        if (body.classList.contains('digital-view')) {
-          body.classList.remove('digital-view');
-          body.classList.add('print-view');
-        } else {
-          body.classList.remove('print-view');
-          body.classList.add('digital-view');
-        }
-      });
+      if (switcher) {
+        switcher.addEventListener('click', () => {
+          if (body.classList.contains('digital-view')) {
+            body.classList.remove('digital-view');
+            body.classList.add('print-view');
+          } else {
+            body.classList.remove('print-view');
+            body.classList.add('digital-view');
+          }
+        });
+      }
     </script>
 
     <!-- Initialize particles.js -->

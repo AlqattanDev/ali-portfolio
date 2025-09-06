@@ -33,6 +33,9 @@ import profile from '../data/profile.json';
 </div>
 
 <script>
-  document.getElementById('current-date').textContent = new Date().toISOString().slice(0, 10);
+  const dateElement = document.getElementById('current-date');
+  if (dateElement) {
+    dateElement.textContent = new Date().toISOString().slice(0, 10);
+  }
 </script>
 
