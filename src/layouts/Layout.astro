@@ -217,25 +217,51 @@
         background: transparent;
         border: 1px solid var(--border-digital);
         color: var(--foreground-digital);
-        padding: 8px 12px;
+        padding: 8px;
         cursor: pointer;
         font-family: var(--font-body);
         font-size: 12px;
         transition: all var(--transition-speed) ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
       }
 
       body.print-view .view-switcher {
         border-color: var(--border-print);
         color: var(--foreground-print);
+        width: 48px;
+        height: 48px;
+        padding: 6px;
       }
 
       .view-switcher:hover {
         background: var(--accent-digital);
+        transform: rotate(15deg);
       }
 
       body.print-view .view-switcher:hover {
         background: var(--accent-print);
         color: var(--background-print);
+        transform: none;
+      }
+      
+      .icon-digital {
+        display: block;
+      }
+      
+      .icon-print {
+        display: none;
+      }
+      
+      body.print-view .icon-digital {
+        display: none;
+      }
+      
+      body.print-view .icon-print {
+        display: block;
       }
 
       .ascii-name {
