@@ -4,7 +4,7 @@ import textstat
 import json
 
 # Fetch the homepage
-response = requests.get('http://localhost:3000')
+response = requests.get('http://localhost:3000/ali-portfolio')
 soup = BeautifulSoup(response.content, 'html.parser')
 
 # Extract text content
