@@ -11,31 +11,42 @@ import profile from '../data/profile.json';
 <Layout>
     <Header />
 
-    <div class="execute-protocol">
-        <p class="terminal-command">$ ./contact --all</p>
-        <p class="comment">// Establishing secure connection...</p>
-        <p>Email: <a href={`mailto:${profile.personal.email}`}>{profile.personal.email}</a></p>
-        <p>LinkedIn: <a href={`https://${profile.personal.linkedin}`} target="_blank">{profile.personal.linkedin}</a></p>
-        <p>GitHub: <a href={`https://${profile.personal.github}`} target="_blank">{profile.personal.github}</a></p>
-        <p>System Log: <a href="/ali-portfolio/blog/">/blog/</a></p>
-    </div>
+    <main id="main-content" class="flex-container" role="main">
+        <section class="execute-protocol" aria-labelledby="contact-heading" data-component="contact-info">
+            <h2 id="contact-heading" class="sr-only">Contact Information</h2>
+            <p class="terminal-command">$ ./contact --all</p>
+            <p class="comment">// Establishing secure connection...</p>
+            <div class="flex-container">
+                <p>Email: <a href={`mailto:${profile.personal.email}`} aria-label={`Send email to ${profile.personal.email}`}>{profile.personal.email}</a></p>
+                <p>LinkedIn: <a href={`https://${profile.personal.linkedin}`} target="_blank" rel="noopener noreferrer" aria-label="Visit LinkedIn profile (opens in new tab)">{profile.personal.linkedin}</a></p>
+                <p>GitHub: <a href={`https://${profile.personal.github}`} target="_blank" rel="noopener noreferrer" aria-label="Visit GitHub profile (opens in new tab)">{profile.personal.github}</a></p>
+                <p>System Log: <a href="/ali-portfolio/blog/" aria-label="Read blog posts">blog/</a></p>
+            </div>
+        </section>
 
-    <Section title="PROJECT_MANIFEST">
-        {profile.projects.map(project => (
-            <ProjectEntry project={project} />
-        ))}
-    </Section>
+        <Section title="PROJECT_MANIFEST">
+            <div class="projects-grid" data-component="projects">
+                {profile.projects.map((project, index) => (
+                    <ProjectEntry project={project} index={index} />
+                ))}
+            </div>
+        </Section>
 
-    <Section title="SKILL_MATRIX">
-        <Skills skills={profile.skills} />
-    </Section>
+        <Section title="SKILL_MATRIX">
+            <div data-component="skills">
+                <Skills skills={profile.skills} />
+            </div>
+        </Section>
 
-    <Section title="EDUCATION_LOG">
-        <Education edu={profile.education} />
-    </Section>
+        <Section title="EDUCATION_LOG">
+            <div data-component="education">
+                <Education edu={profile.education} />
+            </div>
+        </Section>
 
-    <div class="checksum">
-        Document Checksum: {profile.checksum}
-    </div>
+        <footer class="checksum" role="contentinfo" aria-label="Document integrity checksum">
+            Document Checksum: {profile.checksum}
+        </footer>
+    </main>
 </Layout>
 

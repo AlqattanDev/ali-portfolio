@@ -15,13 +15,9 @@
     <!-- Add favicon -->
     <link rel="icon" type="image/svg+xml" href="/ali-portfolio/favicon.svg">
     
-    <!-- Load particles.js library -->
-    <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js" crossorigin="anonymous"></script>
 </head>
 <body class="digital-view">
 
-    <!-- Add a div for particles.js to attach to -->
-    <div id="particles-js"></div>
 
     <div class="watermark">ARCHITECT</div>
     <div class="container page">
@@ -31,142 +27,96 @@
     </div>
 
     <script>
-      // View Switcher Logic
-      const switcher = document.querySelector('.view-switcher') as HTMLElement | null;
+      // Enhanced View Switcher Logic with Accessibility
+      const switcher = document.querySelector('.view-switcher') as HTMLButtonElement | null;
       const body = document.body;
+      const currentModeSpan = document.getElementById('current-mode') as HTMLSpanElement | null;
 
       if (switcher) {
+        // Initialize ARIA state
+        let isDigitalMode = body.classList.contains('digital-view') || !body.classList.contains('print-view');
+        switcher.setAttribute('aria-pressed', isDigitalMode ? 'false' : 'true');
+        
+        if (currentModeSpan) {
+          currentModeSpan.textContent = isDigitalMode ? 'digital' : 'print';
+        }
+
+        // Enhanced click handler
         switcher.addEventListener('click', () => {
           if (body.classList.contains('digital-view')) {
+            // Switch to print mode
             body.classList.remove('digital-view');
             body.classList.add('print-view');
+            switcher.setAttribute('aria-pressed', 'true');
+            switcher.setAttribute('aria-label', 'Switch to digital mode (currently in print mode)');
+            if (currentModeSpan) currentModeSpan.textContent = 'print';
           } else {
+            // Switch to digital mode
             body.classList.remove('print-view');
             body.classList.add('digital-view');
+            switcher.setAttribute('aria-pressed', 'false');
+            switcher.setAttribute('aria-label', 'Switch to print preview mode (currently in digital mode)');
+            if (currentModeSpan) currentModeSpan.textContent = 'digital';
           }
         });
-      }
-    </script>
 
-    <!-- Initialize particles.js -->
-    <script is:inline>
-      // Wait for particles.js to load and initialize - strict mode compatible
-      function initParticles() {
-        // Check if particles.js is loaded
-        if (typeof window.particlesJS !== 'undefined' && window.particlesJS) {
-          try {
-            console.log('Initializing particles.js...');
-            window.particlesJS('particles-js', {
-            "particles": {
-              "number": {
-                "value": 80,
-                "density": {
-                  "enable": true,
-                  "value_area": 800
-                }
-              },
-              "color": {
-                "value": "#00ff41"
-              },
-              "shape": {
-                "type": "circle",
-                "stroke": {
-                  "width": 0,
-                  "color": "#000000"
-                }
-              },
-              "opacity": {
-                "value": 0.3,
-                "random": true,
-                "anim": {
-                  "enable": true,
-                  "speed": 1,
-                  "opacity_min": 0.05,
-                  "sync": false
-                }
-              },
-              "size": {
-                "value": 2,
-                "random": true
-              },
-              "line_linked": {
-                "enable": true,
-                "distance": 150,
-                "color": "#00ff41",
-                "opacity": 0.1,
-                "width": 1
-              },
-              "move": {
-                "enable": true,
-                "speed": 1,
-                "direction": "none",
-                "random": false,
-                "straight": false,
-                "out_mode": "out",
-                "bounce": false
-              }
-            },
-            "interactivity": {
-              "detect_on": "canvas",
-              "events": {
-                "onhover": {
-                  "enable": true,
-                  "mode": "grab"
-                },
-                "onclick": {
-                  "enable": true,
-                  "mode": "push"
-                },
-                "resize": true
-              },
-              "modes": {
-                "grab": {
-                  "distance": 140,
-                  "line_opacity": 0.3
-                },
-                "push": {
-                  "particles_nb": 4
-                }
-              }
-            },
-            "retina_detect": true
-          });
-          console.log('particles.js initialized successfully');
-          } catch (error) {
-            console.error('Error initializing particles.js:', error);
-            // Fallback: hide particles container if initialization fails
-            var particlesContainer = document.getElementById('particles-js');
-            if (particlesContainer) {
-              particlesContainer.style.display = 'none';
-            }
+        // Keyboard support (Enter and Space)
+        switcher.addEventListener('keydown', (event: KeyboardEvent) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            switcher.click();
           }
-        } else {
-          console.log('particles.js not loaded, retrying in 200ms...');
-          setTimeout(initParticles, 200);
-        }
+        });
+
+        // Add ripple effect for better visual feedback
+        switcher.addEventListener('click', (event: MouseEvent) => {
+          const ripple = document.createElement('span');
+          const rect = switcher.getBoundingClientRect();
+          const size = Math.max(rect.width, rect.height);
+          const x = event.clientX - rect.left - size / 2;
+          const y = event.clientY - rect.top - size / 2;
+          
+          ripple.style.cssText = `
+            position: absolute;
+            width: ${size}px;
+            height: ${size}px;
+            left: ${x}px;
+            top: ${y}px;
+            background: rgba(0, 255, 65, 0.3);
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            pointer-events: none;
+          `;
+          
+          switcher.appendChild(ripple);
+          
+          setTimeout(() => {
+            if (ripple.parentNode) {
+              ripple.parentNode.removeChild(ripple);
+            }
+          }, 600);
+        });
       }
 
-      // Initialize with better timing
-      let attempts = 0;
-      const maxAttempts = 25; // 5 seconds max
-      
-      function retryInit() {
-        attempts++;
-        if (attempts > maxAttempts) {
-          console.warn('Failed to load particles.js after multiple attempts');
-          return;
+      // Add ripple animation styles
+      const rippleStyles = document.createElement('style');
+      rippleStyles.textContent = `
+        @keyframes ripple {
+          to {
+            transform: scale(4);
+            opacity: 0;
+          }
         }
-        initParticles();
-      }
-      
-      // Start immediately and also when DOM is ready
-      setTimeout(retryInit, 100);
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', retryInit);
-      } else {
-        retryInit();
-      }
+        
+        .view-switcher {
+          position: relative;
+          overflow: hidden;
+        }
+      `;
+      document.head.appendChild(rippleStyles);
     </script>
+
 
     <style is:global>
       /* Comprehensive Design System - Digital Mode (Dark Theme) */
@@ -359,36 +309,154 @@
       }
 
       /* Container with responsive width */
+      /* Grid Layout System */
       .container {
         width: 100%;
         max-width: var(--container-xl);
         margin: 0 auto;
         padding-inline: var(--space-8);
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--space-24);
       }
 
       @media (min-width: 768px) {
         .container {
           padding-inline: var(--space-16);
+          grid-template-columns: minmax(0, 1fr);
+          gap: var(--space-32);
         }
       }
 
-      /* Interactive Elements */
+      /* CSS Grid Layout for Project Showcase */
+      .projects-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--space-16);
+        margin-top: var(--space-16);
+      }
+
+      @media (min-width: 640px) {
+        .projects-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: var(--space-20);
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .projects-grid {
+          grid-template-columns: repeat(3, 1fr);
+          gap: var(--space-24);
+        }
+      }
+
+      /* Flexbox for Component-level Alignment */
+      .flex-container {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-8);
+      }
+
+      .flex-row {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-8);
+        flex-wrap: wrap;
+      }
+
+      @media (max-width: 768px) {
+        .flex-row {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: var(--space-4);
+        }
+      }
+
+      /* Enhanced Interactive Elements with Focus Indicators (T025) */
       .interactive {
         transition: all var(--duration-fast) var(--ease-out-cubic);
         cursor: pointer;
+        position: relative;
+        border-radius: var(--space-1);
       }
 
       .interactive:hover {
         transform: translateY(-2px);
       }
 
-      .interactive:focus-visible {
-        outline: none;
+      /* Comprehensive Focus Indicators */
+      .interactive:focus-visible,
+      a:focus-visible,
+      button:focus-visible,
+      input:focus-visible,
+      select:focus-visible,
+      textarea:focus-visible,
+      [tabindex]:focus-visible {
+        outline: 2px solid var(--accent-primary);
+        outline-offset: 2px;
         box-shadow: var(--focus-ring);
-        outline-offset: var(--focus-ring-offset);
+        z-index: 1;
       }
 
-      /* Reduced Motion Support */
+      /* High contrast focus indicators */
+      @media (prefers-contrast: high) {
+        .interactive:focus-visible,
+        a:focus-visible,
+        button:focus-visible,
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible,
+        [tabindex]:focus-visible {
+          outline-width: 3px;
+          outline-offset: 3px;
+        }
+      }
+
+      /* Keyboard Navigation Enhancement */
+      [tabindex="0"], [tabindex]:not([tabindex="-1"]) {
+        position: relative;
+      }
+
+      /* Skip link for keyboard users */
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 6px;
+        background: var(--accent-primary);
+        color: var(--bg-primary);
+        padding: var(--space-2) var(--space-4);
+        text-decoration: none;
+        font-weight: 600;
+        border-radius: var(--space-1);
+        transition: top var(--duration-fast) var(--ease-out-cubic);
+        z-index: 1000;
+      }
+
+      .skip-link:focus {
+        top: 6px;
+      }
+
+      /* Enhanced link styles with better focus */
+      a {
+        position: relative;
+        transition: all var(--duration-fast) var(--ease-out-cubic);
+      }
+
+      a:hover {
+        color: var(--accent-secondary);
+      }
+
+      a:focus-visible {
+        color: var(--accent-secondary);
+        background: rgba(0, 255, 65, 0.1);
+        padding: var(--space-1) var(--space-2);
+        margin: calc(-1 * var(--space-1)) calc(-1 * var(--space-2));
+        border-radius: var(--space-1);
+      }
+
+      /* Enhanced Reduced Motion and Accessibility Support (T026) */
       @media (prefers-reduced-motion: reduce) {
         *,
         ::before,
@@ -396,19 +464,89 @@
           animation-duration: 0.01ms !important;
           animation-iteration-count: 1 !important;
           transition-duration: 0.01ms !important;
+          transform: none !important;
+        }
+        
+        .view-switcher:hover {
+          transform: none !important;
+        }
+        
+        .interactive:hover {
+          transform: none !important;
         }
       }
 
-      #particles-js {
-        position: fixed;
-        width: 100%;
-        height: 100%;
-        top: 0;
-        left: 0;
-        z-index: -1;
+      /* High contrast mode support */
+      @media (prefers-contrast: high) {
+        :root {
+          --text-primary: #ffffff;
+          --bg-primary: #000000;
+          --accent-primary: #ffff00;
+          --border-primary: #ffffff;
+        }
+        
+        body.print-view {
+          --text-primary: #000000;
+          --bg-primary: #ffffff;
+          --accent-primary: #000000;
+          --border-primary: #000000;
+        }
       }
 
-      body.print-view #particles-js {
+      /* Dark mode preference support */
+      @media (prefers-color-scheme: light) {
+        body:not(.print-view) {
+          --bg-primary: #fafafa;
+          --bg-secondary: #f0f0f0;
+          --text-primary: #1a1a1a;
+          --accent-primary: #0066cc;
+          --border-primary: #cccccc;
+        }
+      }
+
+      /* Font size preferences */
+      @media (prefers-reduced-data: reduce) {
+        /* Use system fonts when data usage is a concern */
+        :root {
+          --font-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          --font-mono: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+        }
+      }
+
+      /* Screen reader only content */
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      /* Visible when focused for screen readers */
+      .sr-only-focusable:focus {
+        position: static;
+        width: auto;
+        height: auto;
+        padding: var(--space-2) var(--space-4);
+        margin: 0;
+        overflow: visible;
+        clip: auto;
+        white-space: normal;
+        background: var(--accent-primary);
+        color: var(--bg-primary);
+        border-radius: var(--space-1);
+        z-index: 1000;
+      }
+
+      .digital-only {
+        display: block;
+      }
+
+      body.print-view .digital-only {
         display: none;
       }
 
@@ -448,42 +586,93 @@
         position: relative;
       }
 
+      /* Enhanced Mode Switcher with Animations (T023-T024) */
       .view-switcher {
         position: absolute;
         top: 0;
         right: 0;
         background: transparent;
-        border: 1px solid var(--border-digital);
-        color: var(--foreground-digital);
-        padding: 8px;
+        border: 2px solid var(--border-primary);
+        color: var(--text-primary);
+        padding: var(--space-2);
         cursor: pointer;
-        font-family: var(--font-body);
-        font-size: 12px;
-        transition: all var(--transition-speed) ease;
+        font-family: var(--font-mono);
+        font-size: var(--text-xs);
+        transition: all var(--duration-normal) var(--ease-out-cubic);
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 40px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
+        border-radius: var(--space-1);
+        position: relative;
+        overflow: hidden;
+        min-width: 44px; /* Ensure minimum touch target size */
+        min-height: 44px;
+        z-index: 100;
       }
 
+      /* Mode switcher states */
+      .view-switcher:hover {
+        background: var(--bg-secondary);
+        border-color: var(--accent-primary);
+        transform: translateY(-2px);
+        box-shadow: var(--glow-sm);
+      }
+
+      .view-switcher:focus-visible {
+        outline: none;
+        box-shadow: var(--focus-ring);
+        outline-offset: var(--focus-ring-offset);
+      }
+
+      .view-switcher:active {
+        transform: translateY(0);
+        transition: all var(--duration-fast) var(--ease-out-cubic);
+      }
+
+      /* Print mode overrides */
       body.print-view .view-switcher {
-        border-color: var(--border-print);
-        color: var(--foreground-print);
+        border-color: var(--border-primary);
+        color: var(--text-primary);
         width: 48px;
         height: 48px;
-        padding: 6px;
-      }
-
-      .view-switcher:hover {
-        background: var(--accent-digital);
-        transform: rotate(15deg);
+        min-width: 48px;
+        min-height: 48px;
+        padding: var(--space-3);
       }
 
       body.print-view .view-switcher:hover {
-        background: var(--accent-print);
-        color: var(--background-print);
-        transform: none;
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+        transform: none; /* No hover animations in print mode */
+        box-shadow: none;
+      }
+
+      /* Icon transitions */
+      .view-switcher svg {
+        transition: all var(--duration-normal) var(--ease-out-cubic);
+        width: 20px;
+        height: 20px;
+      }
+
+      body.print-view .view-switcher svg {
+        width: 24px;
+        height: 24px;
+      }
+
+      /* Hover animations for icons */
+      .view-switcher:hover .icon-digital {
+        transform: rotate(90deg) scale(1.1);
+      }
+
+      .view-switcher:hover .icon-print {
+        transform: scale(1.1);
+      }
+
+      body.print-view .view-switcher:hover .icon-digital,
+      body.print-view .view-switcher:hover .icon-print {
+        transform: none; /* No animations in print mode */
       }
       
       .icon-digital {
@@ -678,44 +867,1569 @@
         border-bottom-style: solid;
       }
 
+      /* T027 - Enhanced Print-specific Styles and Layout */
       @media print {
+        /* Reset for print optimization */
+        * {
+          -webkit-print-color-adjust: exact !important;
+          color-adjust: exact !important;
+        }
+
+        body {
+          background: white !important;
+          color: black !important;
+          font-family: 'Times New Roman', serif !important;
+          font-size: 12pt !important;
+          line-height: 1.4 !important;
+          margin: 0 !important;
+        }
+
+        /* Print layout optimization */
+        .container {
+          max-width: none !important;
+          padding: 0.5in !important;
+          margin: 0 !important;
+          display: block !important;
+          page-break-inside: avoid;
+        }
+
+        /* Hide interactive elements */
+        .digital-only,
+        .view-switcher,
+        button:not(.print-safe),
+        nav,
+        .navigation,
+        [role="navigation"] {
+          display: none !important;
+        }
+
+        /* Print-specific header styling */
+        .header {
+          margin-bottom: 0.3in !important;
+          page-break-after: avoid;
+        }
+
+        .ascii-name {
+          font-size: 8pt !important;
+          line-height: 1.1 !important;
+          font-family: 'Courier New', monospace !important;
+          margin: 0.2in 0 !important;
+          page-break-inside: avoid;
+        }
+
+        /* Contact section for print */
+        .execute-protocol {
+          margin-bottom: 0.25in !important;
+          page-break-after: avoid;
+          border-bottom: 1pt solid #ccc !important;
+          padding-bottom: 0.15in !important;
+        }
+
+        .terminal-command,
+        .comment {
+          font-size: 10pt !important;
+          margin-bottom: 0.1in !important;
+          font-family: 'Courier New', monospace !important;
+        }
+
+        /* Section styling for print */
+        .section {
+          margin-bottom: 0.3in !important;
+          page-break-inside: avoid;
+          orphans: 3;
+          widows: 3;
+        }
+
+        .section-title {
+          font-size: 12pt !important;
+          font-weight: bold !important;
+          color: black !important;
+          margin-bottom: 0.15in !important;
+          text-transform: uppercase !important;
+          letter-spacing: 1pt !important;
+          border-bottom: 1pt solid black !important;
+          padding-bottom: 0.05in !important;
+          page-break-after: avoid;
+        }
+
+        /* Project entries for print */
+        .entry {
+          margin-bottom: 0.2in !important;
+          padding: 0.1in 0 !important;
+          border-bottom: 0.5pt solid #ccc !important;
+          page-break-inside: avoid;
+          orphans: 2;
+          widows: 2;
+        }
+
+        .entry-header {
+          display: flex !important;
+          justify-content: space-between !important;
+          align-items: baseline !important;
+          margin-bottom: 0.05in !important;
+          page-break-after: avoid;
+        }
+
+        .entry-title {
+          font-weight: bold !important;
+          color: black !important;
+          font-size: 11pt !important;
+        }
+
+        .entry-meta {
+          font-size: 9pt !important;
+          color: #555 !important;
+        }
+
+        .entry-description {
+          font-size: 10pt !important;
+          color: #333 !important;
+          line-height: 1.3 !important;
+          margin-bottom: 0.1in !important;
+        }
+
+        /* Tech stack for print */
+        .tech-stack {
+          display: flex !important;
+          flex-wrap: wrap !important;
+          gap: 0.05in !important;
+          margin-top: 0.1in !important;
+        }
+
+        .tech-tag {
+          background: white !important;
+          color: black !important;
+          padding: 1pt 4pt !important;
+          font-size: 8pt !important;
+          border: 0.5pt solid black !important;
+          font-family: 'Courier New', monospace !important;
+        }
+
+        /* Skills for print */
+        .skills-grid {
+          display: grid !important;
+          grid-template-columns: repeat(2, 1fr) !important;
+          gap: 0.15in !important;
+          page-break-inside: avoid;
+        }
+
+        .skill-category {
+          margin-bottom: 0.15in !important;
+          page-break-inside: avoid;
+        }
+
+        .skill-header {
+          font-weight: bold !important;
+          color: black !important;
+          margin-bottom: 0.1in !important;
+          font-size: 10pt !important;
+          text-transform: uppercase !important;
+        }
+
+        .skill-item {
+          display: flex !important;
+          justify-content: space-between !important;
+          margin-bottom: 0.05in !important;
+          font-size: 9pt !important;
+        }
+
+        .skill-level {
+          color: #555 !important;
+          font-family: 'Courier New', monospace !important;
+          font-size: 8pt !important;
+        }
+
+        /* Links for print - show URLs */
+        a {
+          color: black !important;
+          text-decoration: underline !important;
+        }
+
+        a[href^="http"]:after,
+        a[href^="https"]:after,
+        a[href^="mailto"]:after {
+          content: " (" attr(href) ")" !important;
+          font-size: 8pt !important;
+          color: #666 !important;
+          font-weight: normal !important;
+        }
+
+        /* QR code styling for print */
+        .icon-print {
+          width: 0.8in !important;
+          height: 0.8in !important;
+        }
+
+        /* Watermark for print */
+        .watermark {
+          color: #999 !important;
+          font-size: 8pt !important;
+          position: fixed !important;
+          top: 0.2in !important;
+          left: 0.2in !important;
+        }
+
+        /* Footer/checksum for print */
+        .checksum {
+          margin-top: 0.3in !important;
+          padding-top: 0.1in !important;
+          border-top: 1pt solid #ccc !important;
+          font-size: 8pt !important;
+          color: #666 !important;
+          page-break-before: avoid;
+        }
+
+        /* Page breaks */
+        h1, h2, h3, .section-title {
+          page-break-after: avoid;
+        }
+
+        .entry, .skill-category {
+          page-break-inside: avoid;
+        }
+
+        /* Print margins for A4 paper */
+        @page {
+          margin: 0.75in 0.5in !important;
+          size: A4 !important;
+          
+          @top-center {
+            content: "Ali AlQattan - System Architect";
+            font-size: 10pt;
+            color: #666;
+            margin-bottom: 0.2in;
+          }
+          
+          @bottom-right {
+            content: "Page " counter(page);
+            font-size: 8pt;
+            color: #666;
+          }
+        }
+
+        /* Ensure no content is cut off */
+        tr, img, table, blockquote {
+          page-break-inside: avoid;
+        }
+      }
+
+      /* T028 - QR Code Optimization for Print Mode */
+      body.print-view .icon-print {
+        width: 48px !important;
+        height: 48px !important;
+        filter: contrast(2) brightness(0.8);
+        image-rendering: pixelated;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: crisp-edges;
+      }
+
+      /* Ensure QR code is always visible and scannable */
+      body.print-view .view-switcher {
+        background: white;
+        border: 2px solid black;
+        padding: var(--space-2);
+      }
+
+      /* T029 - Mobile-First Responsive Design Patterns */
+      /* Base mobile styles (320px and up) */
+      .container {
+        padding: var(--space-4) var(--space-4);
+        gap: var(--space-16);
+      }
+
+      .ascii-name {
+        font-size: 6px;
+        overflow-x: auto;
+        white-space: pre;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      /* Small mobile (375px and up) */
+      @media (min-width: 375px) {
+        .container {
+          padding: var(--space-6) var(--space-6);
+        }
+
+        .ascii-name {
+          font-size: 7px;
+        }
+      }
+
+      /* Large mobile / small tablet (480px and up) */
+      @media (min-width: 480px) {
+        .container {
+          padding: var(--space-8) var(--space-8);
+        }
+
+        .ascii-name {
+          font-size: 8px;
+        }
+
+        .projects-grid {
+          grid-template-columns: 1fr;
+          gap: var(--space-12);
+        }
+      }
+
+      /* Tablet (640px and up) */
+      @media (min-width: 640px) {
+        .container {
+          gap: var(--space-20);
+        }
+
+        .projects-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: var(--space-16);
+        }
+
+        .skills-grid {
+          grid-template-columns: repeat(2, 1fr);
+          gap: var(--space-20);
+        }
+
+        .entry-header {
+          flex-direction: row;
+          align-items: flex-start;
+        }
+      }
+
+      /* Large tablet (768px and up) */
+      @media (min-width: 768px) {
+        .container {
+          padding: var(--space-16) var(--space-16);
+          gap: var(--space-24);
+        }
+
+        .ascii-name {
+          font-size: 10px;
+        }
+      }
+
+      /* Desktop (1024px and up) */
+      @media (min-width: 1024px) {
+        .container {
+          gap: var(--space-32);
+        }
+
+        .projects-grid {
+          grid-template-columns: repeat(3, 1fr);
+          gap: var(--space-20);
+        }
+
+        .skills-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+      }
+
+      /* Large desktop (1280px and up) */
+      @media (min-width: 1280px) {
+        .container {
+          gap: var(--space-40);
+        }
+
+        .projects-grid {
+          gap: var(--space-24);
+        }
+      }
+
+      /* T030 - Touch-friendly Interactive Elements */
+      @media (max-width: 1024px) {
+        /* Ensure minimum touch target sizes */
+        .view-switcher,
+        button,
+        a,
+        [tabindex]:not([tabindex="-1"]),
+        .interactive {
+          min-width: 44px;
+          min-height: 44px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: var(--space-2);
+        }
+
+        /* Enhanced touch feedback */
+        .view-switcher:active,
+        button:active,
+        .interactive:active {
+          transform: scale(0.95);
+          opacity: 0.8;
+          transition: all var(--duration-fast) var(--ease-out-cubic);
+        }
+
+        /* Larger tap targets for links */
+        a {
+          padding: var(--space-1) var(--space-2);
+          margin: calc(-1 * var(--space-1)) calc(-1 * var(--space-2));
+          border-radius: var(--space-1);
+        }
+
+        /* Swipe-friendly horizontal scrolling */
+        .ascii-name {
+          scroll-behavior: smooth;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+
+        .ascii-name::-webkit-scrollbar {
+          display: none;
+        }
+
+        /* Touch-friendly tech tags */
+        .tech-tag {
+          min-height: 32px;
+          padding: var(--space-2) var(--space-4);
+          margin: var(--space-1);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        /* Prevent text selection on interactive elements */
+        .view-switcher,
+        button,
+        .interactive {
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+          -webkit-touch-callout: none;
+        }
+
+        /* Smoother animations on touch devices */
+        * {
+          -webkit-tap-highlight-color: rgba(0, 255, 65, 0.2);
+          -webkit-touch-callout: none;
+        }
+
+        /* Safe area insets for modern mobile devices */
+        .container {
+          padding-left: max(var(--space-4), env(safe-area-inset-left));
+          padding-right: max(var(--space-4), env(safe-area-inset-right));
+          padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
+        }
+
+        /* Improved focus for touch devices */
+        .view-switcher:focus-visible,
+        button:focus-visible,
+        a:focus-visible {
+          outline: 3px solid var(--accent-primary);
+          outline-offset: 2px;
+          box-shadow: var(--glow-md);
+        }
+      }
+
+      /* Extra large touch targets for small screens */
+      @media (max-width: 480px) {
+        .view-switcher {
+          min-width: 48px;
+          min-height: 48px;
+        }
+
+        /* Larger spacing for easier interaction */
+        .flex-container {
+          gap: var(--space-12);
+        }
+
+        /* Easier scrolling on small screens */
+        .ascii-name {
+          font-size: 6px;
+          padding: var(--space-2);
+          background: rgba(0, 255, 65, 0.05);
+          border-radius: var(--space-1);
+          margin: var(--space-4) 0;
+        }
+      }
+
+      /* T031 - Advanced Print Media Queries with Page Break Optimization */
+      @media print {
+        /* Advanced page break control */
+        .page-break-before {
+          page-break-before: always !important;
+          break-before: page !important;
+        }
+
+        .page-break-after {
+          page-break-after: always !important;
+          break-after: page !important;
+        }
+
+        .page-break-avoid {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+        }
+
+        /* Intelligent section breaks */
+        .section:nth-of-type(2) {
+          page-break-before: auto;
+          break-before: auto;
+        }
+
+        /* Orphans and widows control for better typography */
+        h1, h2, h3, h4, h5, h6 {
+          orphans: 4 !important;
+          widows: 4 !important;
+          page-break-after: avoid !important;
+          break-after: avoid !important;
+        }
+
+        p, .entry-description {
+          orphans: 3 !important;
+          widows: 3 !important;
+        }
+
+        /* Keep project entries together */
+        .entry {
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+        }
+
+        /* Footer placement optimization */
+        .checksum {
+          position: fixed !important;
+          bottom: 0.5in !important;
+          right: 0.5in !important;
+          font-size: 8pt !important;
+          color: #666 !important;
+        }
+
+        /* QR code print optimization */
+        .icon-print {
+          width: 32px !important;
+          height: 32px !important;
+          min-width: 32px !important;
+          min-height: 32px !important;
+          display: inline-block !important;
+          visibility: visible !important;
+        }
+
+        .icon-digital {
+          display: none !important;
+        }
+
+        /* Print link expansion */
+        a[href^="http"]:after,
+        a[href^="https"]:after {
+          content: " (" attr(href) ")";
+          font-size: 8pt;
+          color: #666;
+          font-style: italic;
+        }
+
+        /* Email links keep clean */
+        a[href^="mailto:"]:after {
+          content: "";
+        }
+
+        /* Color adjustments for print */
+        * {
+          background-color: transparent !important;
+          background-image: none !important;
+          box-shadow: none !important;
+          text-shadow: none !important;
+        }
+
         body {
           background: white !important;
           color: black !important;
         }
-        
-        #particles-js {
-          display: none !important;
+
+        /* Ensure proper margins for binding */
+        @page {
+          size: A4;
+          margin: 0.75in 0.5in 0.75in 0.75in; /* Extra left margin for binding */
+          @top-center {
+            content: "Ali AlQattan - System Architect";
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            color: #666;
+          }
+          @bottom-right {
+            content: "Page " counter(page) " of " counter(pages);
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            color: #666;
+          }
         }
-        
-        .view-switcher {
-          display: none !important;
+
+        /* Named pages for different sections */
+        @page :first {
+          @top-center {
+            content: "";
+          }
         }
-        
-        .watermark {
-          color: #666 !important;
+
+        @page contact {
+          @top-center {
+            content: "Contact Information";
+          }
+        }
+
+        @page projects {
+          @top-center {
+            content: "Project Portfolio";
+          }
+        }
+
+        /* Apply named pages */
+        .execute-protocol {
+          page: contact;
+        }
+
+        .projects-grid {
+          page: projects;
         }
       }
 
-      @media (max-width: 768px) {
-        .container {
-          padding: 20px 15px;
+      /* T032 - Responsive Image Optimization (preparation for future images) */
+      img, picture, svg {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 0 auto;
+      }
+
+      /* Responsive SVG sizing */
+      svg {
+        width: 100%;
+        height: auto;
+      }
+
+      .icon-print, .icon-digital {
+        flex-shrink: 0;
+        width: auto;
+        height: auto;
+      }
+
+      /* Image loading optimization */
+      img {
+        loading: lazy;
+        decoding: async;
+      }
+
+      /* Print mode image adjustments */
+      @media print {
+        img, svg, picture {
+          max-width: 100% !important;
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
         }
-        
-        .ascii-name {
-          font-size: 8px;
-        }
-        
-        .skills-grid {
-          grid-template-columns: 1fr;
-        }
-        
-        .entry-header {
-          flex-direction: column;
-          align-items: flex-start;
+
+        /* Hide decorative images in print */
+        img[alt=""], 
+        img:not([alt]),
+        svg[aria-hidden="true"] {
+          display: none !important;
         }
       }
+
+      /* T033 - Container Queries for Component-Level Responsiveness */
+      @container (min-width: 300px) {
+        .entry {
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: var(--space-4);
+          align-items: start;
+        }
+
+        .entry-header {
+          grid-column: 1 / -1;
+        }
+
+        .entry-content {
+          grid-column: 1;
+        }
+
+        .tech-stack {
+          grid-column: 2;
+          justify-self: end;
+          max-width: 200px;
+        }
+      }
+
+      @container (min-width: 500px) {
+        .projects-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .skills-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      @container (min-width: 800px) {
+        .projects-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+
+        .skills-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+
+        .execute-protocol .flex-container {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: var(--space-8);
+        }
+      }
+
+      /* Container query support for main sections */
+      .section {
+        container-type: inline-size;
+        container-name: section;
+      }
+
+      .projects-grid {
+        container-type: inline-size;
+        container-name: projects;
+      }
+
+      .skills-grid {
+        container-type: inline-size;
+        container-name: skills;
+      }
+
+      .execute-protocol {
+        container-type: inline-size;
+        container-name: contact;
+      }
+
+      /* T034 - CSS Logical Properties for International Layouts */
+      * {
+        /* Use logical properties for better RTL/LTR support */
+        margin-inline-start: 0;
+        margin-inline-end: 0;
+        margin-block-start: 0;
+        margin-block-end: 0;
+        padding-inline-start: 0;
+        padding-inline-end: 0;
+        padding-block-start: 0;
+        padding-block-end: 0;
+      }
+
+      body {
+        padding-inline: var(--space-4);
+        padding-block: var(--space-8);
+      }
+
+      .container {
+        margin-inline: auto;
+        padding-inline: var(--space-6);
+        padding-block: var(--space-4);
+      }
+
+      .section {
+        margin-block-end: var(--space-20);
+        padding-block-end: var(--space-16);
+        border-block-end: 1px solid var(--border-digital);
+      }
+
+      body.print-view .section {
+        border-block-end-color: var(--border-print);
+      }
+
+      .section-title {
+        margin-block-end: var(--space-8);
+        padding-block-end: var(--space-2);
+        border-block-end: 1px solid var(--border-digital);
+      }
+
+      body.print-view .section-title {
+        border-block-end-color: var(--border-print);
+      }
+
+      .entry {
+        margin-block-end: var(--space-12);
+        padding-block-end: var(--space-8);
+        border-block-end: 1px solid var(--border-digital);
+      }
+
+      body.print-view .entry {
+        border-block-end-color: var(--border-print);
+      }
+
+      .entry-header {
+        margin-block-end: var(--space-4);
+      }
+
+      .entry-description {
+        margin-block-end: var(--space-6);
+      }
+
+      .skill-category {
+        margin-block-end: var(--space-8);
+      }
+
+      .skill-header {
+        margin-block-end: var(--space-4);
+      }
+
+      .skill-item {
+        margin-block-end: var(--space-2);
+      }
+
+      .tech-stack {
+        margin-block-start: var(--space-4);
+      }
+
+      .flex-container {
+        gap: var(--space-6);
+      }
+
+      .flex-container > * {
+        margin-inline-end: var(--space-4);
+      }
+
+      .flex-container > *:last-child {
+        margin-inline-end: 0;
+      }
+
+      /* RTL support */
+      [dir="rtl"] .ascii-name {
+        text-align: right;
+      }
+
+      [dir="rtl"] .system-info {
+        text-align: right;
+      }
+
+      [dir="rtl"] .entry-header {
+        flex-direction: row-reverse;
+      }
+
+      [dir="rtl"] .tech-stack {
+        justify-content: flex-end;
+      }
+
+      /* Logical properties for print */
+      @media print {
+        .container {
+          padding-inline: 0.5in;
+          padding-block: 0.3in;
+        }
+
+        .section {
+          margin-block-end: 0.3in;
+          padding-block-end: 0.15in;
+        }
+
+        .entry {
+          margin-block-end: 0.2in;
+          padding-block: 0.1in;
+        }
+      }
+
+      /* T035 - Advanced Accessibility with Focus Management */
+      /* Enhanced focus indicators with improved visibility */
+      :focus-visible {
+        outline: 3px solid var(--accent-primary);
+        outline-offset: 2px;
+        border-radius: 4px;
+        box-shadow: 0 0 0 6px rgba(0, 255, 65, 0.2);
+        transition: all 0.2s ease-out;
+      }
+
+      /* High contrast mode support */
+      @media (prefers-contrast: high) {
+        :focus-visible {
+          outline: 4px solid #00FF41;
+          outline-offset: 3px;
+          box-shadow: 0 0 0 8px rgba(0, 255, 65, 0.4);
+        }
+
+        .view-switcher,
+        a,
+        button {
+          border: 2px solid currentColor;
+        }
+      }
+
+      /* Reduced motion support */
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation-duration: 0.01s !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01s !important;
+          scroll-behavior: auto !important;
+        }
+
+        .view-switcher,
+        .entry,
+        .skill-item {
+          transition: none !important;
+        }
+      }
+
+      /* Enhanced keyboard navigation */
+      .skip-link {
+        position: absolute;
+        top: -40px;
+        left: 6px;
+        background: var(--accent-primary);
+        color: var(--background-digital);
+        padding: 8px 16px;
+        text-decoration: none;
+        border-radius: 4px;
+        z-index: 1000;
+        font-weight: 600;
+        transition: top 0.3s ease-out;
+      }
+
+      .skip-link:focus {
+        top: 6px;
+      }
+
+      /* Focus trap styles */
+      .focus-trap-active {
+        isolation: isolate;
+      }
+
+      .focus-trap-active *:not(.focus-within) {
+        pointer-events: none;
+        user-select: none;
+      }
+
+      /* Improved touch targets for accessibility */
+      button,
+      a,
+      [tabindex]:not([tabindex="-1"]),
+      input,
+      select,
+      textarea {
+        min-width: 44px;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        touch-action: manipulation;
+      }
+
+      /* Screen reader improvements */
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .sr-only-focusable:focus {
+        position: static;
+        width: auto;
+        height: auto;
+        padding: 8px 16px;
+        margin: 0;
+        overflow: visible;
+        clip: auto;
+        white-space: normal;
+        background: var(--accent-primary);
+        color: var(--background-digital);
+        border-radius: 4px;
+        text-decoration: none;
+        font-weight: 600;
+        z-index: 1000;
+      }
+
+      /* ARIA live regions */
+      .live-region {
+        position: absolute;
+        left: -10000px;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+      }
+
+      /* Enhanced color contrast for better readability */
+      .high-contrast {
+        filter: contrast(150%) saturate(120%);
+      }
+
+      @media (prefers-contrast: high) {
+        body {
+          filter: contrast(150%);
+        }
+
+        .view-switcher {
+          background: #000000;
+          color: #FFFFFF;
+          border: 3px solid #00FF41;
+        }
+
+        body.print-view .view-switcher {
+          background: #FFFFFF;
+          color: #000000;
+          border: 3px solid #000000;
+        }
+      }
+
+      /* Focus management for interactive elements */
+      .interactive-element {
+        position: relative;
+      }
+
+      .interactive-element::after {
+        content: '';
+        position: absolute;
+        top: -4px;
+        left: -4px;
+        right: -4px;
+        bottom: -4px;
+        border: 2px solid transparent;
+        border-radius: 6px;
+        pointer-events: none;
+        transition: border-color 0.2s ease-out;
+      }
+
+      .interactive-element:focus-within::after {
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 4px rgba(0, 255, 65, 0.2);
+      }
+
+      /* Improved visibility for forced colors mode */
+      @media (forced-colors: active) {
+        .view-switcher {
+          border: 2px solid ButtonBorder;
+          background: ButtonFace;
+          color: ButtonText;
+        }
+
+        .view-switcher:focus {
+          border-color: Highlight;
+          outline: 2px solid Highlight;
+        }
+
+        .entry,
+        .section {
+          border: 1px solid CanvasText;
+        }
+
+        a {
+          color: LinkText;
+        }
+
+        a:visited {
+          color: VisitedText;
+        }
+      }
+
+      /* Print accessibility enhancements */
+      @media print {
+        .sr-only {
+          position: static;
+          width: auto;
+          height: auto;
+          clip: auto;
+          overflow: visible;
+          white-space: normal;
+          font-size: 8pt;
+          color: #666;
+          font-style: italic;
+        }
+
+        /* Add content labels for screen readers in print */
+        .section::before {
+          content: "Section: " attr(aria-label);
+          display: block;
+          font-size: 8pt;
+          color: #666;
+          margin-bottom: 0.1in;
+          font-style: italic;
+        }
+      }
+
+      /* T036 - Performance Optimization and Core Web Vitals */
+      /* Critical CSS optimizations for better performance */
+      
+      /* GPU acceleration for smooth animations */
+      .view-switcher,
+      .entry,
+      .skill-item {
+        transform: translateZ(0);
+        will-change: transform;
+        backface-visibility: hidden;
+        perspective: 1000px;
+      }
+
+      /* Optimize font loading and rendering */
+      body {
+        font-display: swap;
+        text-rendering: optimizeSpeed;
+      }
+
+      /* Use contain for layout stability */
+      .section {
+        contain: layout style;
+      }
+
+      .entry {
+        contain: layout;
+      }
+
+      .projects-grid,
+      .skills-grid {
+        contain: layout style paint;
+      }
+
+      /* Optimize image rendering */
+      img, svg, picture {
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+        contain: size layout;
+      }
+
+      /* Lazy loading enhancements */
+      .entry,
+      .skill-category {
+        content-visibility: auto;
+        contain-intrinsic-size: 200px;
+      }
+
+      /* Reduce layout shift */
+      .ascii-name {
+        aspect-ratio: 16 / 3;
+        contain: size layout;
+      }
+
+      .view-switcher {
+        contain: layout style;
+      }
+
+      /* Critical path optimization */
+      .header {
+        contain: layout style paint;
+      }
+
+      .system-info {
+        contain: layout;
+      }
+
+      /* Memory optimization for large lists */
+      .projects-grid > .entry:nth-child(n+10) {
+        content-visibility: auto;
+        contain-intrinsic-size: 250px;
+      }
+
+      .skills-grid > .skill-category:nth-child(n+6) {
+        content-visibility: auto;
+        contain-intrinsic-size: 150px;
+      }
+
+      /* Smooth scrolling optimization */
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 2rem;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+
+      /* Intersection Observer target elements */
+      .observe-visibility {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+      }
+
+      .observe-visibility.in-view {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* Optimized hover states */
+      @media (hover: hover) and (pointer: fine) {
+        .view-switcher:hover {
+          transform: scale(1.05) translateZ(0);
+          transition: transform 0.2s ease-out;
+        }
+
+        .entry:hover {
+          transform: translateY(-2px) translateZ(0);
+          transition: transform 0.3s ease-out;
+        }
+
+        a:hover {
+          text-decoration-thickness: 2px;
+          transition: text-decoration-thickness 0.2s ease-out;
+        }
+      }
+
+      /* Prevent layout thrashing */
+      * {
+        box-sizing: border-box;
+      }
+
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      /* CSS Grid optimizations */
+      .projects-grid {
+        grid-auto-rows: minmax(200px, auto);
+        align-content: start;
+      }
+
+      .skills-grid {
+        grid-auto-rows: minmax(120px, auto);
+        align-content: start;
+      }
+
+      /* Optimize text selection */
+      .ascii-name {
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+      }
+
+      /* Browser optimizations */
+      .view-switcher {
+        -webkit-tap-highlight-color: rgba(0, 255, 65, 0.3);
+        -webkit-touch-callout: none;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      /* Optimize custom property usage for better performance */
+      .entry {
+        --entry-border: var(--border-digital);
+        --entry-bg: var(--background-digital);
+        border-bottom-color: var(--entry-border);
+        background-color: var(--entry-bg);
+      }
+
+      body.print-view .entry {
+        --entry-border: var(--border-print);
+        --entry-bg: var(--background-print);
+      }
+
+      /* Resource hints and preloading optimizations */
+      .tech-stack {
+        contain: layout;
+        isolation: isolate;
+      }
+
+      /* Optimize paint workload */
+      .flex-container {
+        contain: layout;
+      }
+
+      .checksum {
+        contain: layout style;
+      }
+
+      /* Performance monitoring elements */
+      .perf-marker {
+        display: none;
+      }
+
+      /* Core Web Vitals optimizations */
+      /* Largest Contentful Paint (LCP) optimization */
+      .ascii-name,
+      .header {
+        contain: layout style;
+      }
+
+      /* Cumulative Layout Shift (CLS) prevention */
+      img,
+      svg,
+      picture {
+        aspect-ratio: attr(width) / attr(height);
+        width: 100%;
+        height: auto;
+      }
+
+      /* First Input Delay (FID) optimization */
+      .view-switcher {
+        touch-action: manipulation;
+      }
+
+      button,
+      a {
+        touch-action: manipulation;
+      }
+
+      /* T037 - Advanced Animations with GSAP Integration */
+      /* Prepare elements for GSAP animations */
+      .gsap-fade-in {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      .gsap-scale-in {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+      }
+
+      .gsap-slide-in {
+        opacity: 0;
+        transform: translateX(-30px);
+      }
+
+      /* Animation-ready states */
+      .projects-grid .entry {
+        opacity: 0;
+        transform: translateY(40px) scale(0.95);
+      }
+
+      .skills-grid .skill-category {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      .section-title {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+
+      .execute-protocol {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      /* Fallback animations for no-JS environments */
+      @media (prefers-reduced-motion: no-preference) {
+        .entry {
+          animation: slideUpFade 0.8s ease-out forwards;
+        }
+
+        .entry:nth-child(1) { animation-delay: 0.1s; }
+        .entry:nth-child(2) { animation-delay: 0.2s; }
+        .entry:nth-child(3) { animation-delay: 0.3s; }
+        .entry:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes slideUpFade {
+          from {
+            opacity: 0;
+            transform: translateY(40px) scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+      }
+
+      /* Performance markers for GSAP */
+      .gsap-trigger {
+        contain: layout;
+      }
+
+      /* Smooth transitions */
+      .smooth-transition {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
     </style>
+
+    <!-- T037 - GSAP Animation System -->
+    <script>
+      import { gsap } from 'gsap';
+      import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+      // Check for GSAP availability and user motion preferences
+      if (typeof gsap !== 'undefined' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Set initial states
+        gsap.set('.section-title', { opacity: 0, y: -20 });
+        gsap.set('.execute-protocol', { opacity: 0, y: 20 });
+        gsap.set('.projects-grid .entry', { opacity: 0, y: 40, scale: 0.95 });
+        gsap.set('.skills-grid .skill-category', { opacity: 0, y: 30 });
+
+        // Header entrance animation
+        gsap.from('.ascii-name', {
+          duration: 1.2,
+          opacity: 0,
+          scale: 0.8,
+          ease: 'power3.out',
+          delay: 0.2
+        });
+
+        gsap.from('.system-info span', {
+          duration: 0.8,
+          opacity: 0,
+          y: 10,
+          stagger: 0.1,
+          ease: 'power2.out',
+          delay: 0.5
+        });
+
+        // Section titles animation
+        ScrollTrigger.batch('.section-title', {
+          onEnter: (elements) => {
+            gsap.to(elements, {
+              duration: 0.8,
+              opacity: 1,
+              y: 0,
+              ease: 'power3.out',
+              stagger: 0.1
+            });
+          },
+          start: 'top 90%'
+        });
+
+        // Contact section animation
+        ScrollTrigger.create({
+          trigger: '.execute-protocol',
+          start: 'top 85%',
+          onEnter: () => {
+            gsap.to('.execute-protocol', {
+              duration: 1,
+              opacity: 1,
+              y: 0,
+              ease: 'power3.out'
+            });
+
+            gsap.from('.execute-protocol .flex-container > *', {
+              duration: 0.6,
+              opacity: 0,
+              y: 15,
+              stagger: 0.1,
+              ease: 'power2.out',
+              delay: 0.3
+            });
+          }
+        });
+
+        // Projects staggered animation
+        ScrollTrigger.batch('.projects-grid .entry', {
+          onEnter: (elements) => {
+            gsap.to(elements, {
+              duration: 1,
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              ease: 'power3.out',
+              stagger: {
+                amount: 0.8,
+                from: 'start'
+              },
+              clearProps: 'transform,opacity'
+            });
+          },
+          start: 'top 85%',
+          once: true
+        });
+
+        // Skills animation with delay
+        ScrollTrigger.batch('.skills-grid .skill-category', {
+          onEnter: (elements) => {
+            gsap.to(elements, {
+              duration: 0.8,
+              opacity: 1,
+              y: 0,
+              ease: 'power2.out',
+              stagger: {
+                amount: 0.6,
+                from: 'start'
+              }
+            });
+
+            // Animate skill items within each category
+            elements.forEach((category, index) => {
+              const skillItems = category.querySelectorAll('.skill-item');
+              gsap.from(skillItems, {
+                duration: 0.5,
+                opacity: 0,
+                x: -20,
+                stagger: 0.05,
+                ease: 'power2.out',
+                delay: index * 0.1 + 0.3
+              });
+            });
+          },
+          start: 'top 80%',
+          once: true
+        });
+
+        // Mode switcher animation
+        const modeSwitcher = document.querySelector('.view-switcher');
+        if (modeSwitcher) {
+          gsap.from(modeSwitcher, {
+            duration: 1,
+            scale: 0,
+            rotation: 180,
+            ease: 'elastic.out(1, 0.5)',
+            delay: 0.8
+          });
+
+          // Add hover animation
+          modeSwitcher.addEventListener('mouseenter', () => {
+            gsap.to(modeSwitcher, {
+              duration: 0.3,
+              scale: 1.1,
+              ease: 'power2.out'
+            });
+          });
+
+          modeSwitcher.addEventListener('mouseleave', () => {
+            gsap.to(modeSwitcher, {
+              duration: 0.3,
+              scale: 1,
+              ease: 'power2.out'
+            });
+          });
+        }
+
+        // Parallax-like effect for checksum
+        ScrollTrigger.create({
+          trigger: '.checksum',
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: 1,
+          onUpdate: (self) => {
+            const progress = self.progress;
+            gsap.to('.checksum', {
+              duration: 0.3,
+              opacity: 0.4 + (progress * 0.6),
+              ease: 'none'
+            });
+          }
+        });
+
+        // Performance optimization
+        ScrollTrigger.config({
+          limitCallbacks: true,
+          syncInterval: 150
+        });
+
+        // Refresh ScrollTrigger on resize
+        ScrollTrigger.addEventListener('refreshInit', () => {
+          gsap.set('.section-title, .execute-protocol, .projects-grid .entry, .skills-grid .skill-category', 
+            { clearProps: 'all' }
+          );
+        });
+
+        // Cleanup function
+        window.addEventListener('beforeunload', () => {
+          ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+        });
+
+        console.log('🎬 GSAP scroll animations initialized');
+      } else {
+        // Fallback for reduced motion or missing GSAP
+        console.log('🔇 Animations disabled (reduced motion or GSAP unavailable)');
+        
+        // Apply immediate visibility for fallback
+        gsap?.set?.('.section-title, .execute-protocol, .projects-grid .entry, .skills-grid .skill-category', 
+          { opacity: 1, y: 0, scale: 1 }
+        ) || requestAnimationFrame(() => {
+          document.querySelectorAll('.section-title, .execute-protocol, .projects-grid .entry, .skills-grid .skill-category')
+            .forEach(el => {
+              el.style.opacity = '1';
+              el.style.transform = 'none';
+            });
+        });
+      }
+    </script>
 </body>
 </html>
 
