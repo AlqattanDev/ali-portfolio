@@ -35,7 +35,7 @@
       if (switcher) {
         // Initialize ARIA state
         let isDigitalMode = body.classList.contains('digital-view') || !body.classList.contains('print-view');
-        switcher.setAttribute('aria-pressed', isDigitalMode ? 'false' : 'true');
+        switcher.setAttribute('aria-checked', isDigitalMode ? 'false' : 'true');
         
         if (currentModeSpan) {
           currentModeSpan.textContent = isDigitalMode ? 'digital' : 'print';
@@ -47,14 +47,14 @@
             // Switch to print mode
             body.classList.remove('digital-view');
             body.classList.add('print-view');
-            switcher.setAttribute('aria-pressed', 'true');
+            switcher.setAttribute('aria-checked', 'true');
             switcher.setAttribute('aria-label', 'Switch to digital mode (currently in print mode)');
             if (currentModeSpan) currentModeSpan.textContent = 'print';
           } else {
             // Switch to digital mode
             body.classList.remove('print-view');
             body.classList.add('digital-view');
-            switcher.setAttribute('aria-pressed', 'false');
+            switcher.setAttribute('aria-checked', 'false');
             switcher.setAttribute('aria-label', 'Switch to print preview mode (currently in digital mode)');
             if (currentModeSpan) currentModeSpan.textContent = 'digital';
           }
