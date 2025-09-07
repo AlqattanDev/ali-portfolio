@@ -7,14 +7,25 @@
     "start": "astro dev",
     "build": "astro check && astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:baseline": "playwright test tests/visual/baseline.spec.js --update-snapshots",
+    "test:visual": "playwright test tests/visual/",
+    "test:accessibility": "axe http://localhost:4321/ali-portfolio --save tests/accessibility/audit-results.json",
+    "test:performance": "lighthouse http://localhost:4321/ali-portfolio --output=json --output-path=tests/performance/lighthouse-results.json",
+    "test:lhci": "lhci autorun",
+    "test:all": "npm run test:baseline && npm run test:accessibility && npm run test:lhci"
   },
   "dependencies": {
     "astro": "^4.0.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.3.0",
+    "@axe-core/cli": "^4.10.2",
+    "@lhci/cli": "^0.15.1",
+    "@playwright/test": "^1.55.0",
+    "lighthouse": "^12.8.2",
     "typescript": "^5.0.0"
   }
 }
-

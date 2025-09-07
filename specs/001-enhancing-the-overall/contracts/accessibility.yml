@@ -1,0 +1,281 @@
+# Accessibility Test Contracts
+# WCAG 2.1 Level AA Compliance Requirements for Portfolio Design Enhancement
+
+accessibility_requirements:
+  
+  # Color and Contrast
+  color_contrast:
+    level: "AA"
+    normal_text_ratio: 4.5  # 18pt+ or 14pt+ bold
+    large_text_ratio: 3.0   # 24pt+ or 19pt+ bold
+    ui_components_ratio: 3.0
+    
+    test_combinations:
+      digital_mode:
+        - background: "#0a0a0a"  # --bg-primary
+          foreground: "#e0e0e0"  # --text-primary
+          expected_ratio: 14.0
+          
+        - background: "#0a0a0a"  # --bg-primary  
+          foreground: "#a0a0a0"  # --text-secondary
+          expected_ratio: 7.0
+          
+        - background: "#0a0a0a"  # --bg-primary
+          foreground: "#00ff41"  # --accent-primary
+          expected_ratio: 12.0
+          
+        - background: "#1a1a1a"  # --bg-secondary
+          foreground: "#e0e0e0"  # --text-primary
+          expected_ratio: 11.0
+          
+      print_mode:
+        - background: "#ffffff"  # --bg-primary (print)
+          foreground: "#000000"  # --text-primary (print) 
+          expected_ratio: 21.0
+          
+        - background: "#ffffff"  # --bg-primary (print)
+          foreground: "#333333"  # --text-secondary (print)
+          expected_ratio: 12.6
+
+  # Keyboard Navigation
+  keyboard_accessibility:
+    tab_order:
+      - element: ".view-switcher"
+        tab_index: 1
+        accessible_name: "Toggle print preview mode"
+        role: "button"
+        
+      - element: "a[href='mailto:alqattandev@gmail.com']"
+        tab_index: 2
+        accessible_name: "Email: alqattandev@gmail.com"
+        role: "link"
+        
+      - element: "a[href*='linkedin']"
+        tab_index: 3
+        accessible_name: "LinkedIn profile"
+        role: "link"
+        
+      - element: "a[href*='github']" 
+        tab_index: 4
+        accessible_name: "GitHub profile"
+        role: "link"
+        
+      - element: "a[href='/blog/']"
+        tab_index: 5
+        accessible_name: "Blog"
+        role: "link"
+        
+    focus_indicators:
+      visibility: "always_visible"
+      contrast_ratio: 3.0
+      outline_width: "2px"
+      outline_style: "solid"
+      outline_color: "#00ff41"  # --accent-primary
+      
+    keyboard_shortcuts:
+      - key: "Tab"
+        action: "next_focusable_element"
+      - key: "Shift+Tab" 
+        action: "previous_focusable_element"
+      - key: "Enter"
+        action: "activate_focused_element"
+      - key: "Space"
+        action: "activate_focused_element"
+
+  # Screen Reader Compatibility
+  screen_reader:
+    semantic_structure:
+      - element: "main"
+        role: "main"
+        label: "Portfolio content"
+        
+      - element: ".header"
+        role: "banner"
+        label: "Site header"
+        
+      - element: ".ascii-name"
+        role: "heading"
+        level: 1
+        text: "Ali AlQattan"
+        
+      - element: ".section-title"
+        role: "heading" 
+        level: 2
+        
+      - element: ".entry-title"
+        role: "heading"
+        level: 3
+        
+    aria_labels:
+      - element: ".view-switcher"
+        aria_label: "Toggle print preview mode"
+        
+      - element: ".skills-grid"
+        aria_label: "Technical skills and proficiency levels"
+        
+      - element: ".tech-stack" 
+        aria_label: "Technologies used in this project"
+        
+    landmark_regions:
+      - region: "banner"
+        element: ".header"
+      - region: "main"
+        element: "main, .container"
+      - region: "contentinfo"
+        element: ".checksum"
+
+  # Alternative Text and Media
+  alt_text:
+    images:
+      - element: ".icon-digital"
+        alt: "Sun icon representing digital mode"
+        
+      - element: ".icon-print" 
+        alt: "QR code linking to portfolio website"
+        
+    svg_accessibility:
+      - element: ".icon-digital"
+        aria_hidden: "false"
+        title: "Digital mode indicator"
+        
+      - element: ".icon-print"
+        aria_hidden: "false" 
+        title: "Print mode with QR code"
+
+  # Content Structure
+  content_structure:
+    heading_hierarchy:
+      h1_count: 1  # ASCII name
+      h1_content: "Ali AlQattan"
+      h2_elements: [".section-title"]
+      h3_elements: [".entry-title"]
+      skip_levels: false
+      
+    list_structure:
+      - element: ".skills-grid .skill-category"
+        type: "definition_list"
+        structure: "dl > dt + dd"
+        
+      - element: ".tech-stack"
+        type: "unordered_list"
+        structure: "ul > li"
+        
+    link_context:
+      - element: "a[href*='mailto']"
+        context: "sufficient"
+        link_text: "alqattandev@gmail.com"
+        
+      - element: "a[href*='linkedin']"
+        context: "sufficient" 
+        link_text: "linkedin.com/in/ali"
+
+  # Form Accessibility (if applicable)
+  form_accessibility:
+    # Not applicable - static portfolio site
+    applicable: false
+
+  # Error Prevention and Recovery
+  error_handling:
+    broken_links:
+      - test: "all_internal_links_valid"
+        severity: "error"
+        
+    missing_content:
+      - test: "all_images_have_alt_text"
+        severity: "error"
+        
+      - test: "all_links_have_accessible_names"
+        severity: "error"
+
+  # Motion and Animation
+  motion_accessibility:
+    prefers_reduced_motion:
+      media_query: "(prefers-reduced-motion: reduce)"
+      behavior: "disable_all_animations"
+      
+    animation_guidelines:
+      - duration: "under_5_seconds"
+      - auto_play: false
+      - pause_controls: "not_required" # decorative only
+      - seizure_safety: true  # no flashing content
+
+  # Responsive Accessibility
+  responsive_a11y:
+    mobile_accessibility:
+      - touch_target_size: "44px_minimum"
+      - zoom_support: "up_to_200_percent"
+      - orientation_support: "portrait_and_landscape"
+      
+    desktop_accessibility:
+      - keyboard_only_navigation: "full_support"
+      - zoom_support: "up_to_200_percent"
+      - high_contrast_mode: "supported"
+
+# Testing Tools and Methods
+testing_methods:
+  
+  automated_testing:
+    tools:
+      - name: "axe-core"
+        coverage: "~40% of WCAG issues"
+        integration: "CI/CD pipeline"
+        
+      - name: "Lighthouse Accessibility"
+        coverage: "~30% of WCAG issues" 
+        integration: "GitHub Actions"
+        
+      - name: "WAVE"
+        coverage: "~35% of WCAG issues"
+        integration: "Manual validation"
+        
+    combined_coverage: "~60-70%"
+    
+  manual_testing:
+    screen_readers:
+      - name: "VoiceOver (macOS)"
+        browser: "Safari"
+        
+      - name: "NVDA (Windows)"
+        browser: "Firefox"
+        
+      - name: "JAWS (Windows)"
+        browser: "Chrome"
+        
+    keyboard_testing:
+      - browser: "Chrome"
+        method: "tab_navigation_only"
+        
+      - browser: "Firefox"  
+        method: "tab_navigation_only"
+        
+    real_user_testing:
+      - users: "screen_reader_users"
+        scenarios: "portfolio_review_tasks"
+        
+      - users: "keyboard_only_users"
+        scenarios: "navigation_tasks"
+
+# Success Criteria
+success_criteria:
+  
+  automated_scores:
+    axe_violations: 0
+    lighthouse_accessibility: 100
+    wave_errors: 0
+    
+  manual_validation:
+    keyboard_navigation: "100%_functional"
+    screen_reader_compatibility: "100%_functional"
+    focus_management: "predictable_and_visible"
+    
+  user_testing:
+    task_completion_rate: "95%_minimum"
+    user_satisfaction: "4.5_out_of_5"
+    accessibility_barriers: "none_reported"
+
+# Compliance Documentation
+compliance_docs:
+  wcag_checklist: "all_level_aa_criteria_met"
+  accessibility_statement: "required"
+  contact_for_issues: "alqattandev@gmail.com"
+  update_frequency: "with_each_design_change"

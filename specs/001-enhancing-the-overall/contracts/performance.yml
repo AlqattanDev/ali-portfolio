@@ -1,0 +1,268 @@
+# Performance Test Contracts
+# Performance requirements and benchmarks for portfolio design enhancement
+
+performance_requirements:
+
+  # Core Web Vitals (2024 standards)
+  core_web_vitals:
+    largest_contentful_paint:
+      target: 2.5  # seconds
+      acceptable: 4.0  # seconds  
+      measurement_points:
+        - "above_fold_content_loaded"
+        - "ascii_art_rendered"
+        - "primary_text_visible"
+        
+    cumulative_layout_shift:
+      target: 0.1  # score
+      acceptable: 0.25  # score
+      causes_to_monitor:
+        - "font_loading_shifts"
+        - "image_loading_without_dimensions"
+        - "dynamic_content_injection"
+        
+    interaction_to_next_paint:
+      target: 200  # milliseconds
+      acceptable: 500  # milliseconds
+      interactions_to_test:
+        - "mode_switcher_click"
+        - "link_navigation" 
+        - "hover_interactions"
+
+  # Lighthouse Performance Metrics
+  lighthouse_targets:
+    performance_score: 95  # minimum
+    accessibility_score: 100  # required
+    best_practices_score: 95  # minimum
+    seo_score: 90  # minimum
+    
+    specific_metrics:
+      first_contentful_paint: 1.5  # seconds
+      speed_index: 2.0  # seconds
+      time_to_interactive: 3.0  # seconds
+      total_blocking_time: 150  # milliseconds
+
+  # Network Performance
+  network_conditions:
+    3g_regular:
+      download: "1.6 Mbps"
+      upload: "750 Kbps" 
+      latency: "150ms"
+      target_load_time: 5.0  # seconds
+      
+    4g:
+      download: "9 Mbps"
+      upload: "9 Mbps"
+      latency: "170ms" 
+      target_load_time: 3.0  # seconds
+      
+    cable:
+      download: "5 Mbps"
+      upload: "1 Mbps"
+      latency: "28ms"
+      target_load_time: 2.0  # seconds
+
+  # Resource Loading Performance  
+  resource_budgets:
+    total_page_size: 1.5  # MB maximum
+    
+    css:
+      critical_css: 15  # KB inline
+      total_css: 50  # KB
+      external_requests: 2  # maximum (fonts + any external)
+      
+    javascript:
+      total_js: 100  # KB
+      main_thread_blocking: 150  # milliseconds maximum
+      
+    images:
+      total_images: 500  # KB
+      formats: ["webp", "avif", "jpg", "png"]  # preference order
+      lazy_loading: true
+      
+    fonts:
+      primary_font_size: 50  # KB (Inter variable)
+      mono_font_size: 100  # KB (JetBrains Mono)
+      loading_strategy: "swap"
+      preload_critical: true
+
+  # Runtime Performance
+  runtime_metrics:
+    animation_performance:
+      frame_rate: 60  # FPS minimum
+      frame_drops: 5  # maximum percent
+      interactions:
+        - "mode_switcher_rotation"
+        - "hover_transform_effects"
+        - "smooth_scrolling"
+        
+    memory_usage:
+      initial_memory: 10  # MB maximum
+      after_interactions: 15  # MB maximum
+      memory_leaks: 0  # tolerated
+      
+    cpu_usage:
+      idle_cpu: 5  # percent maximum
+      interaction_cpu: 30  # percent maximum during interactions
+
+# Device and Browser Testing Matrix
+testing_matrix:
+  
+  desktop_browsers:
+    - browser: "Chrome"
+      version: "latest"
+      device_specs:
+        cpu: "4_core_2ghz"
+        memory: "8gb"
+        
+    - browser: "Firefox"
+      version: "latest" 
+      device_specs:
+        cpu: "4_core_2ghz"
+        memory: "8gb"
+        
+    - browser: "Safari"
+      version: "latest"
+      device_specs:
+        cpu: "m1_4_core"
+        memory: "8gb"
+        
+  mobile_devices:
+    - device: "iPhone 12"
+      browser: "Safari"
+      specs:
+        cpu: "a14_bionic"
+        memory: "4gb"
+        screen: "390x844"
+        
+    - device: "Samsung Galaxy S21"
+      browser: "Chrome"
+      specs:
+        cpu: "snapdragon_888"
+        memory: "8gb" 
+        screen: "384x854"
+        
+    - device: "Budget Android"
+      browser: "Chrome"
+      specs:
+        cpu: "low_end_4_core"
+        memory: "3gb"
+        screen: "360x640"
+
+# Monitoring and Alerts
+monitoring_setup:
+  
+  real_user_monitoring:
+    metrics_to_track:
+      - "core_web_vitals"
+      - "page_load_times"
+      - "error_rates"
+      - "user_interactions"
+      
+    alert_thresholds:
+      lcp_degradation: 3.0  # seconds
+      cls_threshold: 0.15  # score
+      inp_threshold: 300  # milliseconds
+      
+  synthetic_monitoring:
+    frequency: "hourly"
+    locations: ["us-east", "eu-west", "asia-pacific"]
+    
+    test_scenarios:
+      - name: "Homepage Load"
+        url: "/"
+        checks: ["performance", "functionality"]
+        
+      - name: "Mode Switch"
+        url: "/"
+        interactions: ["click_mode_switcher"]
+        checks: ["performance", "visual"]
+
+# Performance Optimization Strategies
+optimization_strategies:
+  
+  loading_optimization:
+    critical_resource_hints:
+      - preload: "primary_font_woff2"
+      - preload: "mono_font_woff2"
+      - preconnect: "fonts.googleapis.com"
+      - dns_prefetch: "fonts.gstatic.com"
+      
+    resource_compression:
+      html: "gzip"
+      css: "gzip + brotli"
+      js: "gzip + brotli"
+      fonts: "woff2_format"
+      
+    caching_strategy:
+      static_assets: "1_year"
+      html: "no_cache"
+      css: "1_month"
+      js: "1_month"
+      fonts: "1_year"
+      
+  rendering_optimization:
+    css_delivery:
+      critical_css: "inline_in_head"
+      non_critical_css: "async_load"
+      unused_css: "removed"
+      
+    font_loading:
+      display_strategy: "swap"
+      fallback_fonts: "system_fonts"
+      variable_fonts: "preferred"
+      
+    layout_stability:
+      image_dimensions: "always_specified"
+      font_metrics: "consistent_with_fallbacks"
+      dynamic_content: "placeholder_space_reserved"
+
+# Performance Testing Protocol
+testing_protocol:
+  
+  automated_testing:
+    ci_cd_integration:
+      - tool: "Lighthouse CI"
+        triggers: ["pull_request", "main_branch_push"]
+        fail_conditions: ["performance < 90", "accessibility < 100"]
+        
+      - tool: "WebPageTest API"
+        frequency: "daily"
+        locations: ["multiple_global_locations"]
+        
+    local_testing:
+      - tool: "Chrome DevTools"
+        metrics: ["core_web_vitals", "runtime_performance"]
+        
+      - tool: "WebPageTest"
+        analysis: ["waterfall", "filmstrip", "performance_budget"]
+        
+  manual_testing:
+    throttling_scenarios:
+      - "3g_regular_connection"
+      - "slow_cpu_simulation" 
+      - "memory_constrained_device"
+      
+    user_experience_validation:
+      - "perceived_performance"
+      - "interaction_responsiveness"
+      - "visual_smoothness"
+
+# Success Criteria and Validation
+validation_criteria:
+  
+  pass_conditions:
+    lighthouse_performance: ">= 95"
+    core_web_vitals: "all_green"
+    resource_budgets: "within_limits"
+    cross_browser_consistency: ">= 95%"
+    
+  performance_regression:
+    lcp_increase: "< 10%"  # maximum acceptable regression
+    cls_increase: "< 0.05"  # maximum acceptable regression
+    bundle_size_increase: "< 5%"  # maximum acceptable regression
+    
+  user_experience_metrics:
+    bounce_rate_improvement: "target"
+    session_duration: "maintain_or_improve"
+    conversion_metrics: "maintain_or_improve"

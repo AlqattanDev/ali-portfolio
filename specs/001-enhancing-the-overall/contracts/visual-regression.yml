@@ -1,0 +1,240 @@
+# Visual Regression Test Contracts
+# These specifications define the visual testing requirements for the portfolio design enhancement
+
+visual_regression_tests:
+  
+  # Homepage Full Page Tests
+  homepage_desktop:
+    name: "Homepage Desktop View"
+    viewport: { width: 1280, height: 800 }
+    url: "/"
+    mode: "digital"
+    scenarios:
+      - name: "Initial Load"
+        actions: []
+        threshold: 0.02  # 2% pixel difference tolerance
+        
+      - name: "Mode Switch to Print"
+        actions:
+          - click: ".view-switcher"
+        threshold: 0.05  # 5% tolerance for mode switch
+        
+      - name: "Hover Interactions"
+        actions:
+          - hover: ".project-entry:first-child"
+          - hover: ".view-switcher" 
+        threshold: 0.01  # 1% tolerance for hover states
+
+  homepage_tablet:
+    name: "Homepage Tablet View"
+    viewport: { width: 768, height: 1024 }
+    url: "/"
+    mode: "digital"
+    scenarios:
+      - name: "Portrait Orientation"
+        actions: []
+        threshold: 0.02
+        
+      - name: "Skills Grid Layout"
+        actions:
+          - scroll: ".skills-grid"
+        threshold: 0.02
+
+  homepage_mobile:
+    name: "Homepage Mobile View"
+    viewport: { width: 375, height: 667 }
+    url: "/"
+    mode: "digital"
+    scenarios:
+      - name: "Mobile Portrait"
+        actions: []
+        threshold: 0.03  # Higher tolerance for mobile rendering
+        
+      - name: "Mobile Scroll Behavior"
+        actions:
+          - scroll: 500  # Scroll down 500px
+        threshold: 0.02
+
+  # Print Mode Tests
+  print_mode_test:
+    name: "Print Mode Visual Validation"
+    viewport: { width: 1280, height: 800 }
+    url: "/"
+    mode: "print"
+    scenarios:
+      - name: "Print Mode Active"
+        actions:
+          - click: ".view-switcher"
+        threshold: 0.05
+        validate:
+          - element_visible: ".icon-print"
+          - element_hidden: ".icon-digital"
+          - color_scheme: "light"
+
+  # Component-Specific Tests
+  header_component:
+    name: "Header Component Tests"
+    viewport: { width: 1280, height: 400 }
+    url: "/"
+    crop_area: ".header"
+    scenarios:
+      - name: "ASCII Art Display"
+        actions: []
+        threshold: 0.01
+        validate:
+          - element_exists: ".ascii-name"
+          - text_content: "ALI ALQATTAN"
+          
+      - name: "Mode Switcher States"
+        actions:
+          - hover: ".view-switcher"
+        threshold: 0.02
+
+  project_grid:
+    name: "Project Grid Layout"
+    viewport: { width: 1280, height: 600 }
+    url: "/"
+    crop_area: ".section:has(.section-title:contains('PROJECT_MANIFEST'))"
+    scenarios:
+      - name: "Project Cards Layout"
+        actions: []
+        threshold: 0.02
+        validate:
+          - element_count: ".entry"
+          - grid_alignment: true
+          
+      - name: "Tech Stack Tags"
+        actions: []
+        threshold: 0.01
+        validate:
+          - element_exists: ".tech-stack"
+          - element_exists: ".tech-tag"
+
+# Cross-Browser Testing Requirements
+browser_matrix:
+  desktop:
+    - browser: "chrome"
+      version: "latest"
+    - browser: "firefox" 
+      version: "latest"
+    - browser: "safari"
+      version: "latest"
+    - browser: "edge"
+      version: "latest"
+      
+  mobile:
+    - browser: "chrome-mobile"
+      device: "iPhone 12"
+    - browser: "safari-mobile"  
+      device: "iPhone 12"
+    - browser: "chrome-mobile"
+      device: "Samsung Galaxy S21"
+
+# Performance Requirements
+performance_contracts:
+  lighthouse_thresholds:
+    performance: 95
+    accessibility: 100
+    best_practices: 95
+    seo: 90
+    
+  core_web_vitals:
+    LCP: 2.5  # Largest Contentful Paint (seconds)
+    CLS: 0.1  # Cumulative Layout Shift
+    INP: 200  # Interaction to Next Paint (milliseconds)
+    
+  custom_metrics:
+    font_load_time: 1.0  # seconds
+    critical_css_size: 15  # KB
+    total_css_size: 50   # KB
+
+# Accessibility Validation
+accessibility_contracts:
+  wcag_level: "AA"
+  automated_tools:
+    - "axe-core"
+    - "lighthouse-accessibility"
+    - "wave"
+    
+  manual_tests:
+    - keyboard_navigation: true
+    - screen_reader_compatibility: true
+    - color_contrast_validation: true
+    - focus_management: true
+    
+  contrast_ratios:
+    normal_text: 4.5  # AA standard
+    large_text: 3.0   # AA standard  
+    ui_components: 3.0 # AA standard
+    
+  keyboard_navigation:
+    - element: ".view-switcher"
+      accessible_name: "Toggle print preview mode"
+      keyboard_action: "Enter"
+    - element: "a[href]"
+      keyboard_action: "Enter"
+    - element: "a[href]"
+      keyboard_action: "Space"
+
+# Animation and Interaction Tests  
+interaction_contracts:
+  hover_states:
+    - selector: ".view-switcher"
+      property: "transform"
+      expected: "rotate(15deg)"
+      duration: "250ms"
+      
+    - selector: ".entry:hover"
+      property: "transform" 
+      expected: "translateY(-2px)"
+      duration: "150ms"
+      
+  focus_states:
+    - selector: ".view-switcher:focus-visible"
+      property: "box-shadow"
+      expected: "focus-ring"
+      color_contrast: 3.0
+      
+  reduced_motion:
+    media_query: "(prefers-reduced-motion: reduce)"
+    expected_behavior: "no_animations"
+    validation: "all_transitions_disabled"
+
+# Typography Validation
+typography_contracts:
+  font_loading:
+    primary_font: "Inter"
+    mono_font: "JetBrains Mono"
+    fallback_behavior: "system_fonts"
+    loading_strategy: "swap"
+    
+  hierarchy_validation:
+    h1_size_range: "31px - 61px"  # Responsive clamp
+    h2_size_range: "20px - 31px"  
+    body_size: "16px"
+    mono_size: "14px"
+    
+  line_height_compliance:
+    headings: 1.1
+    body_text: 1.5
+    code_text: 1.4
+
+# Layout and Spacing Tests
+layout_contracts:
+  grid_system:
+    mobile_columns: 1
+    tablet_columns: 2  
+    desktop_columns: 3
+    gap_mobile: "16px"
+    gap_desktop: "32px"
+    
+  spacing_consistency:
+    base_unit: "8px"
+    scale_ratio: 1.5
+    container_padding: "responsive"
+    section_margins: "consistent"
+    
+  container_widths:
+    mobile: "100% - 32px padding"
+    desktop: "1280px max-width"
+    centered: true
