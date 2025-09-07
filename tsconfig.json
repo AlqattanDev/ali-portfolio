@@ -1,4 +1,12 @@
 {
-  "extends": "astro/tsconfigs/strict"
+  "extends": "astro/tsconfigs/strict",
+  "exclude": [
+    "titleEffect/",
+    "gsap-example/",
+    "node_modules/",
+    "dist/",
+    "test-results/",
+    ".playwright-mcp/"
+  ]
 }
 
