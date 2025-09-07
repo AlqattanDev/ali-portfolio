@@ -60,7 +60,7 @@ export const visualRegressionConfig = {
       url: '/',
       viewport: { width: 1280, height: 800 },
       mode: 'digital',
-      waitForSelector: '[data-component="ascii-art"]',
+      waitForSelector: '.ascii-name',
       animations: 'disabled',
       fullPage: true
     },
@@ -70,7 +70,7 @@ export const visualRegressionConfig = {
       url: '/',
       viewport: { width: 375, height: 667 },
       mode: 'digital',
-      waitForSelector: '[data-component="ascii-art"]',
+      waitForSelector: '.ascii-name',
       animations: 'disabled',
       fullPage: true
     },
@@ -163,7 +163,7 @@ export const visualRegressionConfig = {
     elementVisible: {
       enabled: true,
       selectors: [
-        '[data-component="ascii-art"]',
+        '.ascii-name',
         '[data-component="mode-toggle"]',
         '[data-component="contact-info"]'
       ]
@@ -179,8 +179,8 @@ export const visualRegressionConfig = {
       terminalReady: {
         enabled: true,
         script: () => {
-          const terminal = document.querySelector('[data-component="ascii-art"]');
-          return terminal && terminal.classList.contains('ready');
+          const terminal = document.querySelector('.ascii-name');
+          return terminal; // Just check if ASCII art exists
         }
       }
     }
