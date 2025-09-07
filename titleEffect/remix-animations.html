@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ali AlQattan - Remix Animations</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000000;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+        }
+        canvas {
+            display: block;
+        }
+        .controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0,0,0,0.9);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+        }
+        .controls button {
+            display: block;
+            margin: 8px 0;
+            padding: 10px 15px;
+            background: #111;
+            color: white;
+            border: 1px solid #333;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 200px;
+        }
+        .controls button:hover {
+            background: #222;
+        }
+        .controls button.active {
+            background: #333;
+            border-color: #666;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div class="controls">
+        <div style="margin-bottom: 15px; font-weight: bold;">REMIX ANIMATIONS</div>
+        <button onclick="setAnimation('dna')" class="active">DNA Helix</button>
+        <button onclick="setAnimation('blackhole')">Black Hole</button>
+        <button onclick="setAnimation('tessellate')">Tessellation</button>
+        <button onclick="setAnimation('smoke')">Smoke Dispersion</button>
+        <button onclick="setAnimation('constellation')">Constellation</button>
+        <button onclick="setAnimation('kaleidoscope')">Kaleidoscope</button>
+        <button onclick="setAnimation('portal')">Portal Warp</button>
+        <button onclick="setAnimation('crystallize')">Crystallization</button>
+    </div>
+    
+    <script type="module">
+        const ASCII_TEXT = `
+ █████╗ ██╗     ██╗      █████╗ ██╗      ██████╗  █████╗ ████████╗████████╗ █████╗ ███╗   ██╗
+██╔══██╗██║     ██║     ██╔══██╗██║     ██╔═══██╗██╔══██╗╚══██╔══╝╚══██╔══╝██╔══██╗████╗  ██║
+███████║██║     ██║     ███████║██║     ██║   ██║███████║   ██║      ██║   ███████║██╔██╗ ██║
+██╔══██║██║     ██║     ██╔══██║██║     ██║▄▄ ██║██╔══██║   ██║      ██║   ██╔══██║██║╚██╗██║
+██║  ██║███████╗██║     ██║  ██║███████╗╚██████╔╝██║  ██║   ██║      ██║   ██║  ██║██║ ╚████║
+╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═╝╚══════╝ ╚══▀▀═╝ ╚═╝  ╚═╝   ╚═╝      ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝
+        `.trim();
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const mousePosition = { x: 0, y: 0 };
+        let isHovering = false;
+        let currentAnimation = 'dna';
+        let animationTime = 0;
+        const isMobile = window.innerWidth < 768;
+
+        function updateCanvasSize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function createParticles() {
+            particles = [];
+            const fontSize = isMobile ? 12 : 16;
+            const lines = ASCII_TEXT.split('\n');
+            const lineHeight = fontSize * 1.2;
+            const totalHeight = lines.length * lineHeight;
+            const startX = canvas.width / 2 - 450;
+            const startY = canvas.height / 2 - totalHeight / 2;
+            
+            lines.forEach((line, lineIndex) => {
+                for (let charIndex = 0; charIndex < line.length; charIndex++) {
+                    const char = line[charIndex];
+                    if (char !== ' ') {
+                        const x = startX + charIndex * (fontSize * 0.6);
+                        const y = startY + lineIndex * lineHeight;
+                        
+                        particles.push({
+                            char: char,
+                            x: x,
+                            y: y,
+                            baseX: x,
+                            baseY: y,
+                            offsetX: 0,
+                            offsetY: 0,
+                            size: fontSize,
+                            opacity: 1,
+                            scale: 1,
+                            rotation: 0,
+                            phase: Math.random() * Math.PI * 2,
+                            connections: [],
+                            crystals: []
+                        });
+                    }
+                }
+            });
+        }
+
+        function animate() {
+            animationTime++;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = `${particles[0]?.size || 16}px 'Courier New', monospace`;
+
+            particles.forEach((particle, index) => {
+                const distance = Math.sqrt(
+                    Math.pow(mousePosition.x - particle.baseX, 2) + 
+                    Math.pow(mousePosition.y - particle.baseY, 2)
+                );
+
+                ctx.save();
+
+                switch(currentAnimation) {
+                    case 'dna':
+                        particle.phase += 0.05;
+                        const helixRadius = distance < 100 && isHovering ? 30 : 5;
+                        particle.offsetX = Math.cos(particle.phase + index * 0.2) * helixRadius;
+                        particle.offsetY = Math.sin(particle.phase + index * 0.4) * (helixRadius * 0.3);
+                        
+                        // Draw helix connections
+                        if (index > 0 && distance < 100 && isHovering) {
+                            const prev = particles[index - 1];
+                            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                            ctx.lineWidth = 1;
+                            ctx.beginPath();
+                            ctx.moveTo(prev.baseX + prev.offsetX, prev.baseY + prev.offsetY);
+                            ctx.lineTo(particle.baseX + particle.offsetX, particle.baseY + particle.offsetY);
+                            ctx.stroke();
+                        }
+                        
+                        ctx.fillStyle = 'white';
+                        ctx.fillText(particle.char, particle.baseX + particle.offsetX, particle.baseY + particle.offsetY);
+                        break;
+
+                    case 'blackhole':
+                        if (distance < 150 && isHovering) {
+                            const pull = (150 - distance) / 150;
+                            const angle = Math.atan2(mousePosition.y - particle.baseY, mousePosition.x - particle.baseX);
+                            particle.offsetX += Math.cos(angle) * pull * 2;
+                            particle.offsetY += Math.sin(angle) * pull * 2;
+                            
+                            // Spaghettification effect
+                            particle.scale = 1 + pull * 2;
+                            particle.rotation = angle;
+                            particle.opacity = 1 - pull * 0.7;
+                        } else {
+                            particle.offsetX *= 0.95;
+                            particle.offsetY *= 0.95;
+                            particle.scale = 1;
+                            particle.rotation = 0;
+                            particle.opacity = 1;
+                        }
+                        
+                        ctx.translate(particle.baseX + particle.offsetX, particle.baseY + particle.offsetY);
+                        ctx.rotate(particle.rotation);
+                        ctx.scale(particle.scale, 1);
+                        ctx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`;
+                        ctx.fillText(particle.char, -particle.size/2, particle.size/2);
+                        break;
+
+                    case 'tessellate':
+                        if (distance < 100 && isHovering) {
+                            const gridSize = 20;
+                            particle.offsetX = Math.floor(particle.baseX / gridSize) * gridSize - particle.baseX;
+                            particle.offsetY = Math.floor(particle.baseY / gridSize) * gridSize - particle.baseY;
+                            
+                            // Create tessellation pattern
+                            for (let dx = -1; dx <= 1; dx++) {
+                                for (let dy = -1; dy <= 1; dy++) {
+                                    if (dx !== 0 || dy !== 0) {
+                                        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+                                        ctx.fillText(particle.char, 
+                                            particle.baseX + particle.offsetX + dx * gridSize,
+                                            particle.baseY + particle.offsetY + dy * gridSize);
+                                    }
+                                }
+                            }
+                        } else {
+                            particle.offsetX *= 0.9;
+                            particle.offsetY *= 0.9;
+                        }
+                        
+                        ctx.fillStyle = 'white';
+                        ctx.fillText(particle.char, particle.baseX + particle.offsetX, particle.baseY + particle.offsetY);
+                        break;
+
+                    case 'smoke':
+                        particle.phase += 0.02;
+                        if (distance < 100 && isHovering) {
+                            particle.offsetX += Math.sin(particle.phase) * 2;
+                            particle.offsetY -= Math.abs(Math.cos(particle.phase)) * 3;
+                            particle.opacity = Math.max(0, particle.opacity - 0.02);
+                            particle.scale = Math.min(2, particle.scale + 0.05);
+                        } else {
+                            particle.offsetX *= 0.98;
+                            particle.offsetY *= 0.98;
+                            particle.opacity = Math.min(1, particle.opacity + 0.05);
+                            particle.scale = Math.max(1, particle.scale - 0.02);
+                        }
+                        
+                        ctx.translate(particle.baseX + particle.offsetX, particle.baseY + particle.offsetY);
+                        ctx.scale(particle.scale, particle.scale);
+                        ctx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`;
+                        ctx.fillText(particle.char, -particle.size/2, particle.size/2);
+                        break;
+
+                    case 'constellation':
+                        if (distance < 120 && isHovering) {
+                            // Connect nearby particles
+                            particles.forEach((other, otherIndex) => {
+                                if (otherIndex !== index) {
+                                    const dist = Math.sqrt(
+                                        Math.pow(particle.baseX - other.baseX, 2) + 
+                                        Math.pow(particle.baseY - other.baseY, 2)
+                                    );
+                                    if (dist < 80) {
+                                        ctx.strokeStyle = `rgba(255, 255, 255, ${1 - dist/80})`;
+                                        ctx.lineWidth = 1;
+                                        ctx.beginPath();
+                                        ctx.moveTo(particle.baseX, particle.baseY);
+                                        ctx.lineTo(other.baseX, other.baseY);
+                                        ctx.stroke();
+                                    }
+                                }
+                            });
+                        }
+                        
+                        ctx.fillStyle = 'white';
+                        ctx.fillText(particle.char, particle.baseX, particle.baseY);
+                        break;
+
+                    case 'kaleidoscope':
+                        if (distance < 100 && isHovering) {
+                            const centerX = canvas.width / 2;
+                            const centerY = canvas.height / 2;
+                            
+                            for (let i = 0; i < 6; i++) {
+                                ctx.save();
+                                ctx.translate(centerX, centerY);
+                                ctx.rotate((i * Math.PI) / 3);
+                                ctx.translate(-centerX, -centerY);
+                                ctx.fillStyle = `rgba(255, 255, 255, ${0.8 - i * 0.1})`;
+                                ctx.fillText(particle.char, particle.baseX, particle.baseY);
+                                ctx.restore();
+                            }
+                        } else {
+                            ctx.fillStyle = 'white';
+                            ctx.fillText(particle.char, particle.baseX, particle.baseY);
+                        }
+                        break;
+
+                    case 'portal':
+                        if (distance < 100 && isHovering) {
+                            const warpFactor = (100 - distance) / 100;
+                            particle.offsetX = Math.sin(animationTime * 0.1 + index) * warpFactor * 20;
+                            particle.offsetY = Math.cos(animationTime * 0.1 + index) * warpFactor * 20;
+                            particle.scale = 1 + warpFactor;
+                            
+                            // Portal rings
+                            for (let r = 1; r <= 3; r++) {
+                                ctx.strokeStyle = `rgba(255, 255, 255, ${0.3 / r})`;
+                                ctx.lineWidth = 2;
+                                ctx.beginPath();
+                                ctx.arc(mousePosition.x, mousePosition.y, r * 30, 0, Math.PI * 2);
+                                ctx.stroke();
+                            }
+                        } else {
+                            particle.offsetX *= 0.9;
+                            particle.offsetY *= 0.9;
+                            particle.scale = 1;
+                        }
+                        
+                        ctx.translate(particle.baseX + particle.offsetX, particle.baseY + particle.offsetY);
+                        ctx.scale(particle.scale, particle.scale);
+                        ctx.fillStyle = 'white';
+                        ctx.fillText(particle.char, -particle.size/2, particle.size/2);
+                        break;
+
+                    case 'crystallize':
+                        if (distance < 100 && isHovering) {
+                            if (particle.crystals.length === 0) {
+                                for (let i = 0; i < 6; i++) {
+                                    const angle = (i / 6) * Math.PI * 2;
+                                    particle.crystals.push({
+                                        x: particle.baseX + Math.cos(angle) * 15,
+                                        y: particle.baseY + Math.sin(angle) * 15,
+                                        angle: angle,
+                                        growth: 0
+                                    });
+                                }
+                            }
+                            
+                            particle.crystals.forEach(crystal => {
+                                crystal.growth = Math.min(1, crystal.growth + 0.05);
+                                const size = crystal.growth * 10;
+                                
+                                ctx.save();
+                                ctx.translate(crystal.x, crystal.y);
+                                ctx.rotate(crystal.angle);
+                                ctx.fillStyle = `rgba(255, 255, 255, ${crystal.growth})`;
+                                ctx.fillRect(-size/2, -2, size, 4);
+                                ctx.fillRect(-2, -size/2, 4, size);
+                                ctx.restore();
+                            });
+                            
+                            particle.opacity = 0.3;
+                        } else {
+                            particle.crystals = [];
+                            particle.opacity = 1;
+                        }
+                        
+                        ctx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`;
+                        ctx.fillText(particle.char, particle.baseX, particle.baseY);
+                        break;
+                }
+
+                ctx.restore();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        window.setAnimation = function(type) {
+            currentAnimation = type;
+            animationTime = 0;
+            
+            // Reset particle states
+            particles.forEach(p => {
+                p.offsetX = 0;
+                p.offsetY = 0;
+                p.opacity = 1;
+                p.scale = 1;
+                p.rotation = 0;
+                p.connections = [];
+                p.crystals = [];
+            });
+            
+            // Update button states
+            document.querySelectorAll('.controls button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        // Event listeners
+        canvas.addEventListener('mousemove', (e) => {
+            mousePosition.x = e.clientX;
+            mousePosition.y = e.clientY;
+            isHovering = true;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isHovering = false;
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            mousePosition.x = touch.clientX;
+            mousePosition.y = touch.clientY;
+            isHovering = true;
+        });
+
+        canvas.addEventListener('touchend', () => {
+            isHovering = false;
+        });
+
+        // Initialize
+        updateCanvasSize();
+        createParticles();
+        animate();
+
+        window.addEventListener('resize', () => {
+            updateCanvasSize();
+            createParticles();
+        });
+    </script>
+</body>
+</html>

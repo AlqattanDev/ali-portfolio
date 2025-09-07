@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ali AlQattan - Mixed Animations</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000000;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+        }
+        canvas {
+            display: block;
+        }
+        .info {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0,0,0,0.9);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            max-width: 300px;
+        }
+        .letter-info {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #333;
+            padding-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div class="info">
+        <div style="font-weight: bold; margin-bottom: 15px;">MIXED ANIMATION SYSTEM</div>
+        <div class="letter-info">A - Blockchain Validation</div>
+        <div class="letter-info">L - Particle Dissolve</div>
+        <div class="letter-info">I - DNA Helix</div>
+        <div class="letter-info">A - Trading Fluctuation</div>
+        <div class="letter-info">L - Magnetic Field</div>
+        <div class="letter-info">Q - Portal Warp</div>
+        <div class="letter-info">A - Glass Shatter</div>
+        <div class="letter-info">T - Neural Network</div>
+        <div class="letter-info">T - Crystallization</div>
+        <div class="letter-info">A - Black Hole</div>
+        <div class="letter-info">N - Constellation</div>
+    </div>
+    
+    <script type="module">
+        const ASCII_TEXT = `
+ █████╗ ██╗     ██╗      █████╗ ██╗      ██████╗  █████╗ ████████╗████████╗ █████╗ ███╗   ██╗
+██╔══██╗██║     ██║     ██╔══██╗██║     ██╔═══██╗██╔══██╗╚══██╔══╝╚══██╔══╝██╔══██╗████╗  ██║
+███████║██║     ██║     ███████║██║     ██║   ██║███████║   ██║      ██║   ███████║██╔██╗ ██║
+██╔══██║██║     ██║     ██╔══██║██║     ██║▄▄ ██║██╔══██║   ██║      ██║   ██╔══██║██║╚██╗██║
+██║  ██║███████╗██║     ██║  ██║███████╗╚██████╔╝██║  ██║   ██║      ██║   ██║  ██║██║ ╚████║
+╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═╝╚══════╝ ╚══▀▀═╝ ╚═╝  ╚═╝   ╚═╝      ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝
+        `.trim();
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const mousePosition = { x: 0, y: 0 };
+        let isHovering = false;
+        let animationTime = 0;
+        const isMobile = window.innerWidth < 768;
+
+        // Animation assignments for each letter
+        const letterAnimations = {
+            'A': ['blockchain', 'trading', 'shatter', 'blackhole'],
+            'L': ['dissolve', 'magnetic'],
+            'I': ['dna'],
+            'Q': ['portal'],
+            'T': ['neural', 'crystallize'],
+            'N': ['constellation']
+        };
+
+        function updateCanvasSize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function getLetterFromPosition(charIndex, lineIndex) {
+            const text = "ALI ALQATTAN";
+            const letterPositions = [];
+            let pos = 0;
+            
+            for (let char of text) {
+                if (char !== ' ') {
+                    letterPositions.push(char);
+                }
+            }
+            
+            const totalCharsPerLine = Math.floor(particles.length / 6);
+            const letterIndex = Math.floor(charIndex / (totalCharsPerLine / letterPositions.length));
+            return letterPositions[Math.min(letterIndex, letterPositions.length - 1)] || 'A';
+        }
+
+        function createParticles() {
+            particles = [];
+            const fontSize = isMobile ? 12 : 16;
+            const lines = ASCII_TEXT.split('\n');
+            const lineHeight = fontSize * 1.2;
+            const totalHeight = lines.length * lineHeight;
+            const startX = canvas.width / 2 - 450;
+            const startY = canvas.height / 2 - totalHeight / 2;
+            
+            lines.forEach((line, lineIndex) => {
+                for (let charIndex = 0; charIndex < line.length; charIndex++) {
+                    const char = line[charIndex];
+                    if (char !== ' ') {
+                        const x = startX + charIndex * (fontSize * 0.6);
+                        const y = startY + lineIndex * lineHeight;
+                        const letter = getLetterFromPosition(charIndex, lineIndex);
+                        const animations = letterAnimations[letter] || ['blockchain'];
+                        const animationType = animations[lineIndex % animations.length];
+                        
+                        particles.push({
+                            char: char,
+                            originalChar: char,
+                            x: x,
+                            y: y,
+                            baseX: x,
+                            baseY: y,
+                            offsetX: 0,
+                            offsetY: 0,
+                            size: fontSize,
+                            opacity: 1,
+                            scale: 1,
+                            rotation: 0,
+                            phase: Math.random() * Math.PI * 2,
+                            animationType: animationType,
+                            letter: letter,
+                            fragments: [],
+                            crystals: [],
+                            validated: false,
+                            trend: Math.random() > 0.5 ? 1 : -1,
+                            velocity: { x: 0, y: 0 }
+                        });
+                    }
+                }
+            });
+        }
+
+        function animate() {
+            animationTime++;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = `${particles[0]?.size || 16}px 'Courier New', monospace`;
+
+            particles.forEach((particle, index) => {
+                const distance = Math.sqrt(
+                    Math.pow(mousePosition.x - particle.baseX, 2) + 
+                    Math.pow(mousePosition.y - particle.baseY, 2)
+                );
+
+                ctx.save();
+
+                switch(particle.animationType) {
+                    case 'blockchain':
+                        if (distance < 100 && isHovering) {
+                            particle.validated = true;
+                            const hashChars = ['0', '1', 'a', 'b', 'c', 'd', 'e', 'f'];
+                            particle.char = hashChars[Math.floor(Math.random() * hashChars.length)];
+                            ctx.fillStyle = '#00d4aa';
+                        } else {
+                            particle.validated = false;
+                            particle.char = particle.originalChar;
+                            ctx.fillStyle = '#ffffff';
+                        }
+                        break;
+
+                    case 'dissolve':
+                        if (distance < 100 && isHovering) {
+                            if (particle.fragments.length === 0) {
+                                for (let i = 0; i < 15; i++) {
+                                    particle.fragments.push({
+                                        x: particle.baseX + (Math.random() - 0.5) * 20,
+                                        y: particle.baseY + (Math.random() - 0.5) * 20,
+                                        vx: (Math.random() - 0.5) * 3,
+                                        vy: (Math.random() - 0.5) * 3,
+                                        life: 1
+                                    });
+                                }
+                            }
+                            
+                            particle.fragments.forEach(frag => {
+                                frag.x += frag.vx;
+                                frag.y += frag.vy;
+                                frag.life -= 0.02;
+                                if (frag.life > 0) {
+                                    ctx.fillStyle = `rgba(255, 255, 255, ${frag.life})`;
+                                    ctx.fillRect(frag.x, frag.y, 2, 2);
+                                }
+                            });
+                            particle.opacity = 0;
+                        } else {
+                            particle.fragments = [];
+                            particle.opacity = 1;
+                            ctx.fillStyle = 'white';
+                            ctx.fillText(particle.char, particle.baseX, particle.baseY);
+                        }
+                        break;
+
+                    case 'dna':
+                        particle.phase += 0.05;
+                        const helixRadius = distance < 100 && isHovering ? 25 : 3;
+                        particle.offsetX = Math.cos(particle.phase + index * 0.2) * helixRadius;
+                        particle.offsetY = Math.sin(particle.phase + index * 0.4) * (helixRadius * 0.3);
+                        ctx.fillStyle = '#ff69b4';
+                        ctx.fillText(particle.char, particle.baseX + particle.offsetX, particle.baseY + particle.offsetY);
+                        break;
+
+                    case 'trading':
+                        if (distance < 100 && isHovering) {
+                            particle.offsetY = Math.sin(animationTime * 0.1 + index) * 15 * particle.trend;
+                            const priceChars = ['$', '↑', '↓', '+', '-'];
+                            particle.char = priceChars[Math.floor(Math.random() * priceChars.length)];
+                            ctx.fillStyle = particle.trend > 0 ? '#00ff88' : '#ff4444';
+                        } else {
+                            particle.offsetY *= 0.9;
+                            particle.char = particle.originalChar;
+                            ctx.fillStyle = '#ffffff';
+                        }
+                        ctx.fillText(particle.char, particle.baseX, particle.baseY + particle.offsetY);
+                        break;
+
+                    case 'magnetic':
+                        if (distance < 120 && isHovering) {
+                            const angle = Math.atan2(mousePosition.y - particle.baseY, mousePosition.x - particle.baseX);
+                            const force = (120 - distance) / 120;
+                            particle.velocity.x += Math.cos(angle + Math.PI/2) * force * 0.4;
+                            particle.velocity.y += Math.sin(angle + Math.PI/2) * force * 0.4;
+                        }
+                        
+                        particle.offsetX += particle.velocity.x;
+                        particle.offsetY += particle.velocity.y;
+                        particle.velocity.x *= 0.95;
+                        particle.velocity.y *= 0.95;
+                        
+                        particle.offsetX += (particle.baseX - (particle.baseX + particle.offsetX)) * 0.02;
+                        particle.offsetY += (particle.baseY - (particle.baseY + particle.offsetY)) * 0.02;
+                        
+                        ctx.fillStyle = '#00ffff';
+                        ctx.fillText(particle.char, particle.baseX + particle.offsetX, particle.baseY + particle.offsetY);
+                        break;
+
+                    case 'portal':
+                        if (distance < 100 && isHovering) {
+                            const warpFactor = (100 - distance) / 100;
+                            particle.offsetX = Math.sin(animationTime * 0.1 + index) * warpFactor * 15;
+                            particle.offsetY = Math.cos(animationTime * 0.1 + index) * warpFactor * 15;
+                            particle.scale = 1 + warpFactor * 0.5;
+                        } else {
+                            particle.offsetX *= 0.9;
+                            particle.offsetY *= 0.9;
+                            particle.scale = 1;
+                        }
+                        
+                        ctx.translate(particle.baseX + particle.offsetX, particle.baseY + particle.offsetY);
+                        ctx.scale(particle.scale, particle.scale);
+                        ctx.fillStyle = '#9966ff';
+                        ctx.fillText(particle.char, -particle.size/2, particle.size/2);
+                        break;
+
+                    case 'shatter':
+                        if (distance < 80 && isHovering) {
+                            if (particle.fragments.length === 0) {
+                                for (let i = 0; i < 6; i++) {
+                                    const angle = (i / 6) * Math.PI * 2;
+                                    particle.fragments.push({
+                                        x: particle.baseX,
+                                        y: particle.baseY,
+                                        vx: Math.cos(angle) * 2,
+                                        vy: Math.sin(angle) * 2,
+                                        rotation: Math.random() * Math.PI * 2,
+                                        rotSpeed: (Math.random() - 0.5) * 0.2,
+                                        life: 1
+                                    });
+                                }
+                            }
+                            
+                            particle.fragments.forEach(shard => {
+                                shard.x += shard.vx;
+                                shard.y += shard.vy;
+                                shard.vy += 0.05;
+                                shard.rotation += shard.rotSpeed;
+                                shard.life -= 0.01;
+                                
+                                if (shard.life > 0) {
+                                    ctx.save();
+                                    ctx.translate(shard.x, shard.y);
+                                    ctx.rotate(shard.rotation);
+                                    ctx.fillStyle = `rgba(255, 100, 100, ${shard.life})`;
+                                    ctx.fillText('▲', -3, 3);
+                                    ctx.restore();
+                                }
+                            });
+                            particle.opacity = 0;
+                        } else {
+                            particle.fragments = [];
+                            particle.opacity = 1;
+                            ctx.fillStyle = 'white';
+                            ctx.fillText(particle.char, particle.baseX, particle.baseY);
+                        }
+                        break;
+
+                    case 'neural':
+                        particle.phase += 0.2;
+                        const pulse = Math.sin(particle.phase + index * 0.1) * 0.5 + 0.5;
+                        particle.offsetX = Math.sin(particle.phase) * 3;
+                        if (distance < 100 && isHovering) {
+                            ctx.fillStyle = `rgba(255, 165, 0, ${pulse})`;
+                        } else {
+                            ctx.fillStyle = `rgba(255, 255, 255, ${pulse * 0.7})`;
+                        }
+                        ctx.fillText(particle.char, particle.baseX + particle.offsetX, particle.baseY);
+                        break;
+
+                    case 'crystallize':
+                        if (distance < 100 && isHovering) {
+                            if (particle.crystals.length === 0) {
+                                for (let i = 0; i < 4; i++) {
+                                    const angle = (i / 4) * Math.PI * 2;
+                                    particle.crystals.push({
+                                        x: particle.baseX + Math.cos(angle) * 10,
+                                        y: particle.baseY + Math.sin(angle) * 10,
+                                        angle: angle,
+                                        growth: 0
+                                    });
+                                }
+                            }
+                            
+                            particle.crystals.forEach(crystal => {
+                                crystal.growth = Math.min(1, crystal.growth + 0.03);
+                                const size = crystal.growth * 6;
+                                
+                                ctx.save();
+                                ctx.translate(crystal.x, crystal.y);
+                                ctx.rotate(crystal.angle);
+                                ctx.fillStyle = `rgba(100, 255, 255, ${crystal.growth})`;
+                                ctx.fillRect(-size/2, -1, size, 2);
+                                ctx.fillRect(-1, -size/2, 2, size);
+                                ctx.restore();
+                            });
+                            
+                            particle.opacity = 0.3;
+                        } else {
+                            particle.crystals = [];
+                            particle.opacity = 1;
+                        }
+                        
+                        ctx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`;
+                        ctx.fillText(particle.char, particle.baseX, particle.baseY);
+                        break;
+
+                    case 'blackhole':
+                        if (distance < 120 && isHovering) {
+                            const pull = (120 - distance) / 120;
+                            const angle = Math.atan2(mousePosition.y - particle.baseY, mousePosition.x - particle.baseX);
+                            particle.offsetX += Math.cos(angle) * pull * 1.5;
+                            particle.offsetY += Math.sin(angle) * pull * 1.5;
+                            particle.scale = 1 + pull;
+                            particle.opacity = 1 - pull * 0.5;
+                        } else {
+                            particle.offsetX *= 0.95;
+                            particle.offsetY *= 0.95;
+                            particle.scale = 1;
+                            particle.opacity = 1;
+                        }
+                        
+                        ctx.translate(particle.baseX + particle.offsetX, particle.baseY + particle.offsetY);
+                        ctx.scale(particle.scale, 1);
+                        ctx.fillStyle = `rgba(138, 43, 226, ${particle.opacity})`;
+                        ctx.fillText(particle.char, -particle.size/2, particle.size/2);
+                        break;
+
+                    case 'constellation':
+                        if (distance < 100 && isHovering) {
+                            particles.forEach((other, otherIndex) => {
+                                if (otherIndex !== index && other.animationType === 'constellation') {
+                                    const dist = Math.sqrt(
+                                        Math.pow(particle.baseX - other.baseX, 2) + 
+                                        Math.pow(particle.baseY - other.baseY, 2)
+                                    );
+                                    if (dist < 60) {
+                                        ctx.strokeStyle = `rgba(255, 215, 0, ${1 - dist/60})`;
+                                        ctx.lineWidth = 1;
+                                        ctx.beginPath();
+                                        ctx.moveTo(particle.baseX, particle.baseY);
+                                        ctx.lineTo(other.baseX, other.baseY);
+                                        ctx.stroke();
+                                    }
+                                }
+                            });
+                        }
+                        
+                        ctx.fillStyle = '#ffd700';
+                        ctx.fillText(particle.char, particle.baseX, particle.baseY);
+                        break;
+                }
+
+                ctx.restore();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // Event listeners
+        canvas.addEventListener('mousemove', (e) => {
+            mousePosition.x = e.clientX;
+            mousePosition.y = e.clientY;
+            isHovering = true;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isHovering = false;
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            mousePosition.x = touch.clientX;
+            mousePosition.y = touch.clientY;
+            isHovering = true;
+        });
+
+        canvas.addEventListener('touchend', () => {
+            isHovering = false;
+        });
+
+        // Initialize
+        updateCanvasSize();
+        createParticles();
+        animate();
+
+        window.addEventListener('resize', () => {
+            updateCanvasSize();
+            createParticles();
+        });
+    </script>
+</body>
+</html>

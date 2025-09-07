@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ali AlQattan - Glyph Effect</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000000;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <script type="module">
+        const ASCII_TEXT = `
+ █████╗ ██╗     ██╗      █████╗ ██╗      ██████╗  █████╗ ████████╗████████╗ █████╗ ███╗   ██╗
+██╔══██╗██║     ██║     ██╔══██╗██║     ██╔═══██╗██╔══██╗╚══██╔══╝╚══██╔══╝██╔══██╗████╗  ██║
+███████║██║     ██║     ███████║██║     ██║   ██║███████║   ██║      ██║   ███████║██╔██╗ ██║
+██╔══██║██║     ██║     ██╔══██║██║     ██║▄▄ ██║██╔══██║   ██║      ██║   ██╔══██║██║╚██╗██║
+██║  ██║███████╗██║     ██║  ██║███████╗╚██████╔╝██║  ██║   ██║      ██║   ██║  ██║██║ ╚████║
+╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═╝╚══════╝ ╚══▀▀═╝ ╚═╝  ╚═╝   ╚═╝      ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝
+        `.trim();
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const mousePosition = { x: 0, y: 0 };
+        let isHovering = false;
+        const isMobile = window.innerWidth < 768;
+
+        function updateCanvasSize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function createParticles() {
+            particles = [];
+            
+            const fontSize = isMobile ? 12 : 16;
+            ctx.font = `${fontSize}px 'Courier New', monospace`;
+            
+            const lines = ASCII_TEXT.split('\n');
+            const lineHeight = fontSize * 1.2;
+            const totalHeight = lines.length * lineHeight;
+            
+            const startX = canvas.width / 2 - 450;
+            const startY = canvas.height / 2 - totalHeight / 2;
+            
+            lines.forEach((line, lineIndex) => {
+                for (let charIndex = 0; charIndex < line.length; charIndex++) {
+                    const char = line[charIndex];
+                    if (char !== ' ') {
+                        const x = startX + charIndex * (fontSize * 0.6);
+                        const y = startY + lineIndex * lineHeight;
+                        
+                        particles.push({
+                            char: char,
+                            originalChar: char,
+                            x: x,
+                            y: y,
+                            baseX: x,
+                            baseY: y,
+                            offsetX: 0,
+                            offsetY: 0,
+                            size: fontSize,
+                            isGlyph: false,
+                            pulsePhase: Math.random() * Math.PI * 2,
+                            glyphTimer: 0
+                        });
+                    }
+                }
+            });
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = `${particles[0]?.size || 16}px 'Courier New', monospace`;
+
+            particles.forEach(particle => {
+                const distance = Math.sqrt(
+                    Math.pow(mousePosition.x - (particle.baseX + particle.offsetX), 2) + 
+                    Math.pow(mousePosition.y - (particle.baseY + particle.offsetY), 2)
+                );
+
+                if (distance < 100 && isHovering) {
+                    // Switch to glyph mode
+                    particle.isGlyph = true;
+                    particle.glyphTimer = 60;
+                    particle.pulsePhase += 0.15;
+                    
+                    // Subtle glyph movement
+                    particle.offsetX += (Math.random() - 0.5) * 3;
+                    particle.offsetY += (Math.random() - 0.5) * 3;
+                    
+                    // Draw pulsing red dot instead of character
+                    const pulse = Math.sin(particle.pulsePhase) * 0.4 + 0.6;
+                    ctx.fillStyle = `rgba(255, 68, 68, ${pulse})`;
+                    
+                    const dotSize = particle.size * 0.3 * (1 + Math.sin(particle.pulsePhase) * 0.2);
+                    ctx.beginPath();
+                    ctx.arc(
+                        particle.baseX + particle.offsetX + particle.size * 0.3, 
+                        particle.baseY + particle.offsetY - particle.size * 0.3, 
+                        dotSize, 
+                        0, 
+                        Math.PI * 2
+                    );
+                    ctx.fill();
+                } else {
+                    // Return to text mode
+                    particle.offsetX *= 0.85;
+                    particle.offsetY *= 0.85;
+                    
+                    if (particle.glyphTimer > 0) {
+                        particle.glyphTimer--;
+                        // Still in glyph mode, fading out
+                        const fade = particle.glyphTimer / 60;
+                        ctx.fillStyle = `rgba(255, 68, 68, ${fade})`;
+                        
+                        const dotSize = particle.size * 0.3;
+                        ctx.beginPath();
+                        ctx.arc(
+                            particle.baseX + particle.offsetX + particle.size * 0.3, 
+                            particle.baseY + particle.offsetY - particle.size * 0.3, 
+                            dotSize, 
+                            0, 
+                            Math.PI * 2
+                        );
+                        ctx.fill();
+                    } else {
+                        // Back to normal character
+                        particle.isGlyph = false;
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillText(
+                            particle.originalChar, 
+                            particle.baseX + particle.offsetX, 
+                            particle.baseY + particle.offsetY
+                        );
+                    }
+                }
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // Event listeners
+        canvas.addEventListener('mousemove', (e) => {
+            mousePosition.x = e.clientX;
+            mousePosition.y = e.clientY;
+            isHovering = true;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isHovering = false;
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            mousePosition.x = touch.clientX;
+            mousePosition.y = touch.clientY;
+            isHovering = true;
+        });
+
+        canvas.addEventListener('touchend', () => {
+            isHovering = false;
+        });
+
+        // Initialize
+        updateCanvasSize();
+        createParticles();
+        animate();
+
+        window.addEventListener('resize', () => {
+            updateCanvasSize();
+            createParticles();
+        });
+    </script>
+</body>
+</html>

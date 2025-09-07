@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fine Thought Animation Recreation with GSAP</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #282828;
+            color: #ffffff;
+            font-family: 'Courier New', monospace;
+            overflow-x: hidden;
+            transition: background-color 0.25s;
+        }
+
+        .container {
+            position: relative;
+            min-height: 300vh;
+            padding: 2rem;
+        }
+
+        /* Loading Cover */
+        .loading-cover {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #282828;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Background Grid */
+        .background-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.3;
+        }
+
+        .grid-line {
+            position: absolute;
+            color: #5e5e5e;
+            font-size: 14px;
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+
+        /* Main Content */
+        .main-content {
+            position: relative;
+            z-index: 1;
+            padding-top: 10vh;
+        }
+
+        .hero-text {
+            font-size: clamp(2rem, 8vw, 6rem);
+            font-weight: bold;
+            line-height: 1.1;
+            margin-bottom: 2rem;
+        }
+
+        .typewriter-text {
+            display: inline-block;
+            overflow: hidden;
+        }
+
+        .char {
+            display: inline-block;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .glitch-char {
+            position: relative;
+            display: inline-block;
+        }
+
+        .glitch-char::before,
+        .glitch-char::after {
+            content: attr(data-char);
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+        }
+
+        .glitch-char::before {
+            color: #ff0000;
+            transform: translateX(-2px);
+        }
+
+        .glitch-char::after {
+            color: #00ffff;
+            transform: translateX(2px);
+        }
+
+        /* Line Numbers */
+        .line-numbers {
+            position: fixed;
+            left: 1rem;
+            top: 0;
+            height: 100%;
+            width: 3rem;
+            z-index: 2;
+            padding-top: 2rem;
+        }
+
+        .line-number {
+            display: block;
+            color: #5e5e5e;
+            font-size: 12px;
+            line-height: 1.5;
+            text-align: right;
+            opacity: 0;
+        }
+
+        /* Code Lines */
+        .code-section {
+            margin-top: 4rem;
+            padding-left: 4rem;
+        }
+
+        .code-line {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: 1px solid #5e5e5e;
+            color: #ffffff;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            z-index: 1000;
+        }
+
+        .light-mode {
+            background-color: #ffffff;
+            color: #000000;
+        }
+
+        .light-mode .loading-cover {
+            background-color: #ffffff;
+        }
+
+        .light-mode .grid-line,
+        .light-mode .line-number {
+            color: #d6e2fb;
+        }
+
+        .light-mode .theme-toggle {
+            color: #000000;
+            border-color: #d6e2fb;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Cover -->
+    <div class="loading-cover">
+        <div class="typewriter-text">Loading...</div>
+    </div>
+
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" onclick="toggleTheme()">Switch Theme</button>
+
+    <!-- Line Numbers -->
+    <div class="line-numbers">
+        <span class="line-number">1</span>
+        <span class="line-number">2</span>
+        <span class="line-number">3</span>
+        <span class="line-number">4</span>
+        <span class="line-number">5</span>
+        <span class="line-number">6</span>
+        <span class="line-number">7</span>
+        <span class="line-number">8</span>
+        <span class="line-number">9</span>
+        <span class="line-number">10</span>
+    </div>
+
+    <!-- Background Grid -->
+    <div class="background-grid" id="backgroundGrid"></div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <div class="main-content">
+            <h1 class="hero-text">
+                <div class="typewriter-text" id="line1">Web engineer</div>
+                <div class="typewriter-text" id="line2">& creative coder</div>
+            </h1>
+
+            <div class="hero-text" style="margin-top: 4rem;">
+                <div class="typewriter-text" id="brandText">Fine Thought</div>
+            </div>
+
+            <div class="code-section">
+                <div class="code-line">const developer = {</div>
+                <div class="code-line">  name: 'Fine Thought',</div>
+                <div class="code-line">  skills: ['JavaScript', 'React', 'GSAP'],</div>
+                <div class="code-line">  passion: 'Creative Coding'</div>
+                <div class="code-line">};</div>
+                <div class="code-line"></div>
+                <div class="code-line">function createMagic() {</div>
+                <div class="code-line">  return developer.skills.map(skill => {</div>
+                <div class="code-line">    return `${skill} + creativity = innovation`;</div>
+                <div class="code-line">  });</div>
+                <div class="code-line">}</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Register ScrollTrigger plugin
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Initialize animations when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAnimations();
+        });
+
+        function initializeAnimations() {
+            // Create background grid
+            createBackgroundGrid();
+            
+            // Page load animation
+            pageLoadAnimation();
+            
+            // Typewriter animations
+            setupTypewriterAnimations();
+            
+            // Scroll-triggered animations
+            setupScrollAnimations();
+            
+            // Line number animations
+            animateLineNumbers();
+        }
+
+        function createBackgroundGrid() {
+            const grid = document.getElementById('backgroundGrid');
+            const patterns = ['-', '--', '---', '----', '-----', '------', '-------'];
+            
+            for (let i = 0; i < 50; i++) {
+                const line = document.createElement('div');
+                line.className = 'grid-line';
+                line.textContent = patterns[Math.floor(Math.random() * patterns.length)];
+                line.style.left = Math.random() * 100 + '%';
+                line.style.top = Math.random() * 100 + '%';
+                grid.appendChild(line);
+                
+                // Animate grid lines
+                gsap.to(line, {
+                    x: Math.random() * 200 - 100,
+                    y: Math.random() * 200 - 100,
+                    duration: Math.random() * 10 + 5,
+                    repeat: -1,
+                    yoyo: true,
+                    ease: "none"
+                });
+            }
+        }
+
+        function pageLoadAnimation() {
+            // Simulate loading time
+            gsap.to('.loading-cover', {
+                opacity: 0,
+                duration: 0.5,
+                delay: 1.5,
+                onComplete: function() {
+                    document.querySelector('.loading-cover').style.display = 'none';
+                    document.body.classList.add('loaded');
+                }
+            });
+        }
+
+        function setupTypewriterAnimations() {
+            const texts = ['#line1', '#line2', '#brandText'];
+            
+            texts.forEach((selector, index) => {
+                const element = document.querySelector(selector);
+                const text = element.textContent;
+                element.innerHTML = '';
+                
+                // Split text into characters
+                for (let i = 0; i < text.length; i++) {
+                    const char = document.createElement('span');
+                    char.className = 'char glitch-char';
+                    char.textContent = text[i] === ' ' ? '\u00A0' : text[i];
+                    char.setAttribute('data-char', char.textContent);
+                    element.appendChild(char);
+                }
+                
+                // Animate characters
+                const chars = element.querySelectorAll('.char');
+                gsap.fromTo(chars, 
+                    {
+                        opacity: 0,
+                        y: 20
+                    },
+                    {
+                        opacity: 1,
+                        y: 0,
+                        duration: 0.05,
+                        stagger: 0.03,
+                        delay: 2 + (index * 0.5),
+                        ease: "back.out(1.7)",
+                        onComplete: function() {
+                            // Add glitch effect randomly
+                            addGlitchEffect(chars);
+                        }
+                    }
+                );
+            });
+        }
+
+        function addGlitchEffect(chars) {
+            chars.forEach(char => {
+                if (Math.random() > 0.7) {
+                    gsap.to([char + '::before', char + '::after'], {
+                        opacity: 0.8,
+                        duration: 0.1,
+                        repeat: 3,
+                        yoyo: true,
+                        delay: Math.random() * 2
+                    });
+                }
+            });
+        }
+
+        function setupScrollAnimations() {
+            // Animate code lines on scroll
+            gsap.utils.toArray('.code-line').forEach((line, index) => {
+                gsap.fromTo(line, 
+                    {
+                        opacity: 0,
+                        x: -20
+                    },
+                    {
+                        opacity: 1,
+                        x: 0,
+                        duration: 0.6,
+                        scrollTrigger: {
+                            trigger: line,
+                            start: "top 80%",
+                            end: "bottom 20%",
+                            toggleActions: "play none none reverse"
+                        }
+                    }
+                );
+            });
+        }
+
+        function animateLineNumbers() {
+            gsap.utils.toArray('.line-number').forEach((number, index) => {
+                gsap.to(number, {
+                    opacity: 0.6,
+                    duration: 0.3,
+                    delay: 2.5 + (index * 0.1),
+                    scrollTrigger: {
+                        trigger: number,
+                        start: "top 90%",
+                        toggleActions: "play none none reverse"
+                    }
+                });
+            });
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            
+            // Animate theme transition
+            gsap.to('body', {
+                duration: 0.25,
+                ease: "power2.inOut"
+            });
+        }
+
+        // Advanced GSAP techniques for Fine Thought recreation
+        function createAdvancedEffects() {
+            // Parallax scrolling for background elements
+            gsap.utils.toArray('.grid-line').forEach(line => {
+                gsap.to(line, {
+                    yPercent: -50,
+                    ease: "none",
+                    scrollTrigger: {
+                        trigger: line,
+                        start: "top bottom",
+                        end: "bottom top",
+                        scrub: true
+                    }
+                });
+            });
+
+            // Morphing text effect
+            const morphText = (element, newText) => {
+                const tl = gsap.timeline();
+                tl.to(element.querySelectorAll('.char'), {
+                    rotationX: 90,
+                    duration: 0.3,
+                    stagger: 0.02
+                })
+                .call(() => {
+                    element.textContent = newText;
+                    // Re-split text into characters
+                    setupTypewriterAnimations();
+                })
+                .to(element.querySelectorAll('.char'), {
+                    rotationX: 0,
+                    duration: 0.3,
+                    stagger: 0.02
+                });
+            };
+
+            // Scroll-triggered text morphing
+            ScrollTrigger.create({
+                trigger: ".hero-text",
+                start: "top 20%",
+                onEnter: () => {
+                    // Add dynamic text changes based on scroll
+                }
+            });
+        }
+
+        // Initialize advanced effects
+        setTimeout(createAdvancedEffects, 3000);
+    </script>
+</body>
+</html>
+

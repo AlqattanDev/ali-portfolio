@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ali AlQattan - Modern Subtle</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000000;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+        }
+        canvas {
+            display: block;
+        }
+        .info {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            color: rgba(255,255,255,0.7);
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 11px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .effect {
+            margin: 8px 0;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .effect:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div class="info">
+        <div style="font-weight: bold; margin-bottom: 15px; color: white;">BINARY EFFECTS</div>
+        <div class="effect">A - Binary Morph (floating 01)</div>
+        <div class="effect">A - Neural Pulse (01 connections)</div>
+        <div class="effect">A - Data Stream (falling 01)</div>
+        <div class="effect">A - Quantum Split (0|1 states)</div>
+        <div class="effect">L - Code Compile (01 compilation)</div>
+        <div class="effect">L - Terminal Type (typing 01)</div>
+        <div class="effect">I - Bit Flip (0↔1 toggle)</div>
+        <div class="effect">Q - Encrypt/Decrypt (01 cipher)</div>
+        <div class="effect">T - Matrix Rain (01 cascade)</div>
+        <div class="effect">T - System Boot (01 loading)</div>
+        <div class="effect">N - Network Sync (01 packets)</div>
+    </div>
+    
+    <script type="module">
+        const ASCII_TEXT = `
+ █████╗ ██╗     ██╗      █████╗ ██╗      ██████╗  █████╗ ████████╗████████╗ █████╗ ███╗   ██╗
+██╔══██╗██║     ██║     ██╔══██╗██║     ██╔═══██╗██╔══██╗╚══██╔══╝╚══██╔══╝██╔══██╗████╗  ██║
+███████║██║     ██║     ███████║██║     ██║   ██║███████║   ██║      ██║   ███████║██╔██╗ ██║
+██╔══██║██║     ██║     ██╔══██║██║     ██║▄▄ ██║██╔══██║   ██║      ██║   ██╔══██║██║╚██╗██║
+██║  ██║███████╗██║     ██║  ██║███████╗╚██████╔╝██║  ██║   ██║      ██║   ██║  ██║██║ ╚████║
+╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═╝╚══════╝ ╚══▀▀═╝ ╚═╝  ╚═╝   ╚═╝      ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝
+        `.trim();
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const mousePosition = { x: 0, y: 0 };
+        let isHovering = false;
+        let animationTime = 0;
+        const isMobile = window.innerWidth < 768;
+
+        const letterEffects = {
+            'A': ['binary_morph', 'neural_pulse', 'data_stream', 'quantum_split'],
+            'L': ['code_compile', 'terminal_type'],
+            'I': ['bit_flip'],
+            'Q': ['encrypt_decrypt'],
+            'T': ['matrix_rain', 'system_boot'],
+            'N': ['network_sync']
+        };
+
+        function updateCanvasSize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function getLetterFromPosition(charIndex, lineIndex) {
+            const text = "ALI ALQATTAN";
+            const letterPositions = [];
+            
+            for (let char of text) {
+                if (char !== ' ') {
+                    letterPositions.push(char);
+                }
+            }
+            
+            const totalCharsPerLine = Math.floor(particles.length / 6);
+            const letterIndex = Math.floor(charIndex / (totalCharsPerLine / letterPositions.length));
+            return letterPositions[Math.min(letterIndex, letterPositions.length - 1)] || 'A';
+        }
+
+        function createParticles() {
+            particles = [];
+            const fontSize = isMobile ? 12 : 16;
+            const lines = ASCII_TEXT.split('\n');
+            const lineHeight = fontSize * 1.2;
+            const totalHeight = lines.length * lineHeight;
+            const startX = canvas.width / 2 - 450;
+            const startY = canvas.height / 2 - totalHeight / 2;
+            
+            lines.forEach((line, lineIndex) => {
+                for (let charIndex = 0; charIndex < line.length; charIndex++) {
+                    const char = line[charIndex];
+                    if (char !== ' ') {
+                        const x = startX + charIndex * (fontSize * 0.6);
+                        const y = startY + lineIndex * lineHeight;
+                        const letter = getLetterFromPosition(charIndex, lineIndex);
+                        const effects = letterEffects[letter] || ['breathe'];
+                        const effectType = effects[lineIndex % effects.length];
+                        
+                        particles.push({
+                            char: char,
+                            originalChar: char,
+                            x: x,
+                            y: y,
+                            baseX: x,
+                            baseY: y,
+                            offsetX: 0,
+                            offsetY: 0,
+                            size: fontSize,
+                            opacity: 1,
+                            scale: 1,
+                            rotation: 0,
+                            phase: Math.random() * Math.PI * 2,
+                            effectType: effectType,
+                            targetOpacity: 1,
+                            targetScale: 1,
+                            targetX: 0,
+                            targetY: 0
+                        });
+                    }
+                }
+            });
+        }
+
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+        }
+
+        function animate() {
+            animationTime++;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = `${particles[0]?.size || 16}px 'Courier New', monospace`;
+
+            particles.forEach((particle, index) => {
+                const distance = Math.sqrt(
+                    Math.pow(mousePosition.x - particle.baseX, 2) + 
+                    Math.pow(mousePosition.y - particle.baseY, 2)
+                );
+
+                const isNear = distance < 80;
+                const influence = isNear && isHovering ? Math.max(0, 1 - distance / 80) : 0;
+
+                switch(particle.effectType) {
+                    case 'binary_morph':
+                        if (isNear && isHovering) {
+                            particle.phase += 0.15;
+                            if (Math.sin(particle.phase) > 0.7) {
+                                const binaryChars = ['0', '1', '0', '1', particle.char];
+                                particle.char = binaryChars[Math.floor(Math.random() * binaryChars.length)];
+                            }
+                            // Draw floating 01 around character
+                            for (let i = 0; i < 3; i++) {
+                                const angle = (animationTime * 0.02) + (i * Math.PI * 2 / 3);
+                                const radius = 15 + Math.sin(animationTime * 0.05) * 5;
+                                const bx = particle.baseX + Math.cos(angle) * radius;
+                                const by = particle.baseY + Math.sin(angle) * radius;
+                                ctx.fillStyle = `rgba(0, 255, 65, ${0.3 + Math.sin(animationTime * 0.1 + i) * 0.2})`;
+                                ctx.fillText(i % 2 === 0 ? '0' : '1', bx, by);
+                            }
+                            ctx.fillStyle = '#00ff41';
+                        } else {
+                            particle.char = particle.originalChar || particle.char;
+                            ctx.fillStyle = 'white';
+                        }
+                        break;
+
+                    case 'neural_pulse':
+                        if (isNear && isHovering) {
+                            particle.phase += 0.1;
+                            const pulse = Math.sin(particle.phase) * 0.5 + 0.5;
+                            particle.scale = 1 + pulse * 0.2;
+                            
+                            // Neural network connections with binary data
+                            for (let i = 0; i < 4; i++) {
+                                const angle = (i * Math.PI / 2) + animationTime * 0.01;
+                                const endX = particle.baseX + Math.cos(angle) * 25;
+                                const endY = particle.baseY + Math.sin(angle) * 25;
+                                
+                                ctx.strokeStyle = `rgba(255, 107, 53, ${pulse * 0.5})`;
+                                ctx.lineWidth = 1;
+                                ctx.beginPath();
+                                ctx.moveTo(particle.baseX, particle.baseY);
+                                ctx.lineTo(endX, endY);
+                                ctx.stroke();
+                                
+                                ctx.fillStyle = `rgba(255, 107, 53, ${pulse})`;
+                                ctx.fillText(Math.random() > 0.5 ? '1' : '0', endX - 3, endY + 3);
+                            }
+                            ctx.fillStyle = '#ff6b35';
+                        } else {
+                            particle.scale = 1;
+                            ctx.fillStyle = 'white';
+                        }
+                        break;
+
+                    case 'data_stream':
+                        if (isNear && isHovering) {
+                            // Vertical stream of 01 falling
+                            for (let i = 0; i < 8; i++) {
+                                const streamY = particle.baseY - 60 + ((animationTime * 2 + i * 10) % 120);
+                                const opacity = 1 - Math.abs(streamY - particle.baseY) / 60;
+                                if (opacity > 0) {
+                                    ctx.fillStyle = `rgba(0, 212, 255, ${opacity * 0.6})`;
+                                    ctx.fillText(i % 2 === 0 ? '0' : '1', particle.baseX + (i % 3 - 1) * 8, streamY);
+                                }
+                            }
+                            ctx.fillStyle = '#00d4ff';
+                        } else {
+                            ctx.fillStyle = 'white';
+                        }
+                        break;
+
+                    case 'quantum_split':
+                        if (isNear && isHovering) {
+                            particle.phase += 0.2;
+                            const split = Math.sin(particle.phase) > 0.5;
+                            if (split) {
+                                // Quantum superposition - show both states
+                                ctx.fillStyle = 'rgba(255, 64, 129, 0.7)';
+                                ctx.fillText('0', particle.baseX - 5, particle.baseY);
+                                ctx.fillText('1', particle.baseX + 5, particle.baseY);
+                                particle.opacity = 0.3;
+                            } else {
+                                ctx.fillStyle = '#ff4081';
+                                particle.opacity = 1;
+                            }
+                        } else {
+                            particle.opacity = 1;
+                            ctx.fillStyle = 'white';
+                        }
+                        break;
+
+                    case 'code_compile':
+                        if (isNear && isHovering) {
+                            const compileStages = [particle.char, '0', '1', '01', '10', particle.char];
+                            const stage = Math.floor(animationTime / 10) % compileStages.length;
+                            particle.char = compileStages[stage];
+                            
+                            if (stage < 4) {
+                                ctx.fillStyle = '#ffaa00';
+                                // Show compilation progress with binary
+                                ctx.fillStyle = 'rgba(255, 170, 0, 0.4)';
+                                ctx.fillText('compiling...', particle.baseX - 30, particle.baseY - 20);
+                            } else {
+                                ctx.fillStyle = '#00ff88';
+                            }
+                        } else {
+                            particle.char = particle.originalChar || particle.char;
+                            ctx.fillStyle = 'white';
+                        }
+                        break;
+
+                    case 'terminal_type':
+                        if (isNear && isHovering) {
+                            particle.phase += 0.3;
+                            const typeSequence = ['_', '0', '01', '010', '0101', particle.char];
+                            const typeIndex = Math.floor(particle.phase / 15) % typeSequence.length;
+                            particle.char = typeSequence[typeIndex];
+                            
+                            if (typeIndex < 5) {
+                                ctx.fillStyle = '#00ff41';
+                                // Cursor blink
+                                if (Math.floor(animationTime / 10) % 2 === 0) {
+                                    ctx.fillText('_', particle.baseX + 10, particle.baseY);
+                                }
+                            } else {
+                                ctx.fillStyle = 'white';
+                            }
+                        } else {
+                            particle.char = particle.originalChar || particle.char;
+                            ctx.fillStyle = 'white';
+                        }
+                        break;
+
+                    case 'bit_flip':
+                        if (isNear && isHovering) {
+                            particle.phase += 0.25;
+                            const flipStates = ['0', '1', '0', '1', particle.char];
+                            particle.char = flipStates[Math.floor(particle.phase / 8) % flipStates.length];
+                            
+                            particle.rotation = Math.sin(particle.phase) * 0.1;
+                            ctx.fillStyle = particle.char === '0' ? '#ff4444' : particle.char === '1' ? '#44ff44' : 'white';
+                        } else {
+                            particle.char = particle.originalChar || particle.char;
+                            particle.rotation = 0;
+                            ctx.fillStyle = 'white';
+                        }
+                        break;
+
+                    case 'encrypt_decrypt':
+                        if (isNear && isHovering) {
+                            const cryptoSequence = ['#', '@', '0', '1', '01', '10', particle.char];
+                            const cryptoIndex = Math.floor(animationTime / 12) % cryptoSequence.length;
+                            particle.char = cryptoSequence[cryptoIndex];
+                            
+                            if (cryptoIndex < 6) {
+                                ctx.fillStyle = '#ff6600';
+                                particle.offsetX = (Math.random() - 0.5) * 2;
+                            } else {
+                                ctx.fillStyle = '#00ff88';
+                                particle.offsetX = 0;
+                            }
+                        } else {
+                            particle.char = particle.originalChar || particle.char;
+                            particle.offsetX = 0;
+                            ctx.fillStyle = 'white';
+                        }
+                        break;
+
+                    case 'matrix_rain':
+                        if (isNear && isHovering) {
+                            // Matrix-style falling binary
+                            for (let i = 0; i < 6; i++) {
+                                const rainY = particle.baseY - 40 + ((animationTime * 3 + i * 15) % 80);
+                                const rainOpacity = 1 - Math.abs(rainY - particle.baseY) / 40;
+                                if (rainOpacity > 0) {
+                                    ctx.fillStyle = `rgba(0, 255, 65, ${rainOpacity * 0.8})`;
+                                    ctx.fillText(Math.random() > 0.5 ? '0' : '1', particle.baseX, rainY);
+                                }
+                            }
+                            
+                            const matrixChars = ['0', '1', '01', '10', particle.char];
+                            particle.char = matrixChars[Math.floor(animationTime / 8) % matrixChars.length];
+                            ctx.fillStyle = '#00ff41';
+                        } else {
+                            particle.char = particle.originalChar || particle.char;
+                            ctx.fillStyle = 'white';
+                        }
+                        break;
+
+                    case 'system_boot':
+                        if (isNear && isHovering) {
+                            const bootSequence = ['...', '0', '01', '010', '0101', 'BOOT', particle.char];
+                            const bootIndex = Math.floor(animationTime / 20) % bootSequence.length;
+                            particle.char = bootSequence[bootIndex];
+                            
+                            if (bootIndex < 6) {
+                                ctx.fillStyle = '#ffaa00';
+                                if (bootIndex < 5) {
+                                    // Show loading dots
+                                    const dots = '.'.repeat((animationTime % 30) / 10 + 1);
+                                    ctx.fillStyle = 'rgba(255, 170, 0, 0.5)';
+                                    ctx.fillText(dots, particle.baseX + 15, particle.baseY);
+                                }
+                            } else {
+                                ctx.fillStyle = 'white';
+                            }
+                        } else {
+                            particle.char = particle.originalChar || particle.char;
+                            ctx.fillStyle = 'white';
+                        }
+                        break;
+
+                    case 'network_sync':
+                        if (isNear && isHovering) {
+                            // Network packet transmission with binary
+                            particle.phase += 0.1;
+                            const packetData = ['0', '1', '01', '10', '101', '010'];
+                            
+                            for (let i = 0; i < 4; i++) {
+                                const angle = (i * Math.PI / 2) + particle.phase;
+                                const distance = 20 + Math.sin(particle.phase + i) * 5;
+                                const px = particle.baseX + Math.cos(angle) * distance;
+                                const py = particle.baseY + Math.sin(angle) * distance;
+                                
+                                ctx.fillStyle = `rgba(255, 64, 129, ${0.6 + Math.sin(particle.phase + i) * 0.3})`;
+                                ctx.fillText(packetData[i % packetData.length], px, py);
+                            }
+                            
+                            ctx.fillStyle = '#ff4081';
+                        } else {
+                            ctx.fillStyle = 'white';
+                        }
+                        break;
+                }
+
+                // Apply transformations
+                ctx.save();
+                ctx.translate(
+                    particle.baseX + particle.offsetX, 
+                    particle.baseY + particle.offsetY
+                );
+                
+                if (particle.rotation !== 0) {
+                    ctx.rotate(particle.rotation);
+                }
+                
+                if (particle.scale !== 1) {
+                    ctx.scale(particle.scale, particle.scale);
+                }
+
+                ctx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`;
+                ctx.fillText(
+                    particle.char, 
+                    particle.rotation !== 0 || particle.scale !== 1 ? -particle.size/2 : 0,
+                    particle.rotation !== 0 || particle.scale !== 1 ? particle.size/2 : 0
+                );
+
+                ctx.shadowBlur = 0;
+                ctx.restore();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // Event listeners
+        canvas.addEventListener('mousemove', (e) => {
+            mousePosition.x = e.clientX;
+            mousePosition.y = e.clientY;
+            isHovering = true;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isHovering = false;
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            mousePosition.x = touch.clientX;
+            mousePosition.y = touch.clientY;
+            isHovering = true;
+        });
+
+        canvas.addEventListener('touchend', () => {
+            isHovering = false;
+        });
+
+        // Initialize
+        updateCanvasSize();
+        createParticles();
+        animate();
+
+        window.addEventListener('resize', () => {
+            updateCanvasSize();
+            createParticles();
+        });
+    </script>
+</body>
+</html>

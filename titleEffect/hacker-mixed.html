@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ali AlQattan - AI Hacker</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0a0a0a;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+        }
+        canvas {
+            display: block;
+        }
+        .terminal {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: #00ff41;
+            background: rgba(0,0,0,0.95);
+            padding: 15px;
+            border: 1px solid #00ff41;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: 'Courier New', monospace;
+            max-width: 350px;
+        }
+        .prompt {
+            color: #00ff41;
+            font-weight: bold;
+        }
+        .skill {
+            margin: 3px 0;
+            padding: 3px 8px;
+            border-left: 2px solid #333;
+            padding-left: 8px;
+        }
+        .ai { border-left-color: #ff6b35; }
+        .hack { border-left-color: #00ff41; }
+        .dev { border-left-color: #00d4ff; }
+        .sys { border-left-color: #ff4081; }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div class="terminal">
+        <div class="prompt">root@ali:~$ whoami</div>
+        <div style="margin: 10px 0; color: #00ff41;">SYSTEM ARCHITECT | AI ENGINEER</div>
+        <div class="prompt">root@ali:~$ cat skills.txt</div>
+        <div class="skill ai">A - Neural Networks & Deep Learning</div>
+        <div class="skill hack">L - Penetration Testing & Exploits</div>
+        <div class="skill dev">I - Full-Stack Development</div>
+        <div class="skill ai">A - Machine Learning Pipelines</div>
+        <div class="skill hack">L - Reverse Engineering</div>
+        <div class="skill ai">Q - Quantum Computing</div>
+        <div class="skill dev">A - Distributed Systems</div>
+        <div class="skill sys">T - Infrastructure Automation</div>
+        <div class="skill hack">T - Cryptographic Protocols</div>
+        <div class="skill ai">A - LLM Fine-tuning</div>
+        <div class="skill sys">N - Network Security</div>
+        <div class="prompt" style="margin-top: 10px;">root@ali:~$ ./run_demo.sh</div>
+    </div>
+    
+    <script type="module">
+        const ASCII_TEXT = `
+ █████╗ ██╗     ██╗      █████╗ ██╗      ██████╗  █████╗ ████████╗████████╗ █████╗ ███╗   ██╗
+██╔══██╗██║     ██║     ██╔══██╗██║     ██╔═══██╗██╔══██╗╚══██╔══╝╚══██╔══╝██╔══██╗████╗  ██║
+███████║██║     ██║     ███████║██║     ██║   ██║███████║   ██║      ██║   ███████║██╔██╗ ██║
+██╔══██║██║     ██║     ██╔══██║██║     ██║▄▄ ██║██╔══██║   ██║      ██║   ██╔══██║██║╚██╗██║
+██║  ██║███████╗██║     ██║  ██║███████╗╚██████╔╝██║  ██║   ██║      ██║   ██║  ██║██║ ╚████║
+╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═╝╚══════╝ ╚══▀▀═╝ ╚═╝  ╚═╝   ╚═╝      ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝
+        `.trim();
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const mousePosition = { x: 0, y: 0 };
+        let isHovering = false;
+        let animationTime = 0;
+        const isMobile = window.innerWidth < 768;
+
+        // Hacker/AI Engineer skill assignments
+        const letterSkills = {
+            'A': ['neural', 'ml', 'distributed', 'llm'],
+            'L': ['exploit', 'reverse'],
+            'I': ['fullstack'],
+            'Q': ['quantum'],
+            'T': ['infra', 'crypto'],
+            'N': ['network']
+        };
+
+        function updateCanvasSize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function getLetterFromPosition(charIndex, lineIndex) {
+            const text = "ALI ALQATTAN";
+            const letterPositions = [];
+            
+            for (let char of text) {
+                if (char !== ' ') {
+                    letterPositions.push(char);
+                }
+            }
+            
+            const totalCharsPerLine = Math.floor(particles.length / 6);
+            const letterIndex = Math.floor(charIndex / (totalCharsPerLine / letterPositions.length));
+            return letterPositions[Math.min(letterIndex, letterPositions.length - 1)] || 'A';
+        }
+
+        function createParticles() {
+            particles = [];
+            const fontSize = isMobile ? 12 : 16;
+            const lines = ASCII_TEXT.split('\n');
+            const lineHeight = fontSize * 1.2;
+            const totalHeight = lines.length * lineHeight;
+            const startX = canvas.width / 2 - 450;
+            const startY = canvas.height / 2 - totalHeight / 2;
+            
+            lines.forEach((line, lineIndex) => {
+                for (let charIndex = 0; charIndex < line.length; charIndex++) {
+                    const char = line[charIndex];
+                    if (char !== ' ') {
+                        const x = startX + charIndex * (fontSize * 0.6);
+                        const y = startY + lineIndex * lineHeight;
+                        const letter = getLetterFromPosition(charIndex, lineIndex);
+                        const skills = letterSkills[letter] || ['neural'];
+                        const skillType = skills[lineIndex % skills.length];
+                        
+                        particles.push({
+                            char: char,
+                            originalChar: char,
+                            x: x,
+                            y: y,
+                            baseX: x,
+                            baseY: y,
+                            offsetX: 0,
+                            offsetY: 0,
+                            size: fontSize,
+                            opacity: 1,
+                            scale: 1,
+                            rotation: 0,
+                            phase: Math.random() * Math.PI * 2,
+                            skillType: skillType,
+                            letter: letter,
+                            hackState: 0,
+                            neurons: [],
+                            exploits: [],
+                            packets: []
+                        });
+                    }
+                }
+            });
+        }
+
+        function animate() {
+            animationTime++;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = `${particles[0]?.size || 16}px 'Courier New', monospace`;
+
+            particles.forEach((particle, index) => {
+                const distance = Math.sqrt(
+                    Math.pow(mousePosition.x - particle.baseX, 2) + 
+                    Math.pow(mousePosition.y - particle.baseY, 2)
+                );
+
+                ctx.save();
+
+                switch(particle.skillType) {
+                    case 'neural':
+                        // AI Neural Network
+                        if (distance < 100 && isHovering) {
+                            const aiChars = ['λ', 'Σ', 'Δ', 'Ω', 'α', 'β'];
+                            particle.char = aiChars[Math.floor(animationTime / 20) % aiChars.length];
+                            ctx.fillStyle = '#ff6b35';
+                        } else {
+                            particle.char = particle.originalChar;
+                            ctx.fillStyle = '#ffffff';
+                        }
+                        ctx.fillText(particle.char, particle.baseX + particle.offsetX, particle.baseY + particle.offsetY);
+                        break;
+
+                    case 'exploit':
+                        // Penetration Testing
+                        if (distance < 100 && isHovering) {
+                            const exploitChars = ['0x', 'FF', 'AA', 'BB', 'CC'];
+                            particle.char = exploitChars[Math.floor(animationTime / 15) % exploitChars.length];
+                            particle.offsetX = Math.sin(animationTime * 0.3) * 5;
+                            ctx.fillStyle = '#00ff41';
+                        } else {
+                            particle.char = particle.originalChar;
+                            particle.offsetX *= 0.9;
+                            ctx.fillStyle = '#ffffff';
+                        }
+                        ctx.fillText(particle.char, particle.baseX + particle.offsetX, particle.baseY + particle.offsetY);
+                        break;
+
+                    case 'fullstack':
+                        // Full-Stack Development
+                        if (distance < 100 && isHovering) {
+                            const stackLayers = ['DB', 'API', 'UI', 'CDN'];
+                            const layer = Math.floor(animationTime / 30) % stackLayers.length;
+                            particle.char = stackLayers[layer];
+                            particle.offsetY = Math.sin(animationTime * 0.1 + index) * 5;
+                            const layerColors = ['#4CAF50', '#2196F3', '#FF9800', '#9C27B0'];
+                            ctx.fillStyle = layerColors[layer];
+                        } else {
+                            particle.char = particle.originalChar;
+                            particle.offsetY *= 0.9;
+                            ctx.fillStyle = '#ffffff';
+                        }
+                        ctx.fillText(particle.char, particle.baseX + particle.offsetX, particle.baseY + particle.offsetY);
+                        break;
+
+                    case 'ml':
+                        // Machine Learning Pipeline
+                        if (distance < 100 && isHovering) {
+                            const mlSteps = ['ETL', 'FE', 'ML', 'VAL'];
+                            const step = Math.floor(animationTime / 40) % mlSteps.length;
+                            particle.char = mlSteps[step];
+                            ctx.fillStyle = '#ff6b35';
+                        } else {
+                            particle.char = particle.originalChar;
+                            ctx.fillStyle = '#ffffff';
+                        }
+                        ctx.fillText(particle.char, particle.baseX + particle.offsetX, particle.baseY + particle.offsetY);
+                        break;
+
+                    case 'reverse':
+                        // Reverse Engineering
+                        if (distance < 100 && isHovering) {
+                            const asmChars = ['MOV', 'JMP', 'CMP', 'INT'];
+                            particle.char = asmChars[Math.floor(Math.random() * asmChars.length)];
+                            ctx.fillStyle = '#00ff41';
+                        } else {
+                            particle.char = particle.originalChar;
+                            ctx.fillStyle = '#ffffff';
+                        }
+                        ctx.fillText(particle.char, particle.baseX + particle.offsetX, particle.baseY + particle.offsetY);
+                        break;
+
+                    case 'quantum':
+                        // Quantum Computing
+                        particle.phase += 0.2;
+                        const superposition = Math.sin(particle.phase) > 0.3;
+                        if (superposition && distance < 100 && isHovering) {
+                            particle.char = Math.random() > 0.5 ? '|0⟩' : '|1⟩';
+                            particle.offsetX = (Math.random() - 0.5) * 10;
+                            ctx.fillStyle = '#ff4081';
+                        } else {
+                            particle.char = particle.originalChar;
+                            particle.offsetX *= 0.8;
+                            ctx.fillStyle = '#ffffff';
+                        }
+                        ctx.fillText(particle.char, particle.baseX + particle.offsetX, particle.baseY + particle.offsetY);
+                        break;
+
+                    case 'distributed':
+                        // Distributed Systems
+                        if (distance < 100 && isHovering) {
+                            const nodeChars = ['N1', 'N2', 'N3', 'LB'];
+                            particle.char = nodeChars[index % nodeChars.length];
+                            ctx.fillStyle = '#00d4ff';
+                        } else {
+                            particle.char = particle.originalChar;
+                            ctx.fillStyle = '#ffffff';
+                        }
+                        ctx.fillText(particle.char, particle.baseX + particle.offsetX, particle.baseY + particle.offsetY);
+                        break;
+
+                    case 'infra':
+                        // Infrastructure Automation
+                        if (distance < 100 && isHovering) {
+                            const infraChars = ['K8s', 'TF', 'AWS', 'CI'];
+                            particle.char = infraChars[Math.floor(animationTime / 50) % infraChars.length];
+                            particle.offsetY = Math.cos(animationTime * 0.05 + index) * 3;
+                            ctx.fillStyle = '#ff4081';
+                        } else {
+                            particle.char = particle.originalChar;
+                            particle.offsetY *= 0.9;
+                            ctx.fillStyle = '#ffffff';
+                        }
+                        ctx.fillText(particle.char, particle.baseX + particle.offsetX, particle.baseY + particle.offsetY);
+                        break;
+
+                    case 'crypto':
+                        // Cryptographic Protocols
+                        if (distance < 100 && isHovering) {
+                            const cryptoChars = ['AES', 'RSA', 'SHA', 'TLS'];
+                            particle.char = cryptoChars[Math.floor(animationTime / 35) % cryptoChars.length];
+                            particle.offsetX = Math.sin(animationTime * 0.2 + index) * 6;
+                            ctx.fillStyle = '#ff4081';
+                        } else {
+                            particle.char = particle.originalChar;
+                            particle.offsetX *= 0.9;
+                            ctx.fillStyle = '#ffffff';
+                        }
+                        ctx.fillText(particle.char, particle.baseX + particle.offsetX, particle.baseY + particle.offsetY);
+                        break;
+
+                    case 'llm':
+                        // LLM Fine-tuning
+                        if (distance < 100 && isHovering) {
+                            const llmChars = ['GPT', 'BERT', 'T5', 'CLIP'];
+                            particle.char = llmChars[Math.floor(animationTime / 45) % llmChars.length];
+                            ctx.fillStyle = '#ff6b35';
+                        } else {
+                            particle.char = particle.originalChar;
+                            ctx.fillStyle = '#ffffff';
+                        }
+                        ctx.fillText(particle.char, particle.baseX + particle.offsetX, particle.baseY + particle.offsetY);
+                        break;
+
+                    case 'network':
+                        // Network Security
+                        if (distance < 100 && isHovering) {
+                            const netChars = ['FW', 'IDS', 'VPN', 'WAF'];
+                            particle.char = netChars[Math.floor(animationTime / 25) % netChars.length];
+                            ctx.fillStyle = '#ff4081';
+                        } else {
+                            particle.char = particle.originalChar;
+                            ctx.fillStyle = '#ffffff';
+                        }
+                        ctx.fillText(particle.char, particle.baseX + particle.offsetX, particle.baseY + particle.offsetY);
+                        break;
+
+                    default:
+                        // Fallback
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillText(particle.originalChar, particle.baseX, particle.baseY);
+                        break;
+                }
+
+                ctx.fillText(
+                    particle.char,
+                    particle.baseX + particle.offsetX,
+                    particle.baseY + particle.offsetY
+                );
+
+                ctx.restore();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // Event listeners
+        canvas.addEventListener('mousemove', (e) => {
+            mousePosition.x = e.clientX;
+            mousePosition.y = e.clientY;
+            isHovering = true;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isHovering = false;
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            mousePosition.x = touch.clientX;
+            mousePosition.y = touch.clientY;
+            isHovering = true;
+        });
+
+        canvas.addEventListener('touchend', () => {
+            isHovering = false;
+        });
+
+        // Initialize
+        updateCanvasSize();
+        createParticles();
+        animate();
+
+        window.addEventListener('resize', () => {
+            updateCanvasSize();
+            createParticles();
+        });
+    </script>
+</body>
+</html>
