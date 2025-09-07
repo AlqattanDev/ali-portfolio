@@ -2424,8 +2424,8 @@
         ) || requestAnimationFrame(() => {
           document.querySelectorAll('.section-title, .execute-protocol, .projects-grid .entry, .skills-grid .skill-category')
             .forEach(el => {
-              el.style.opacity = '1';
-              el.style.transform = 'none';
+              (el as HTMLElement).style.opacity = '1';
+              (el as HTMLElement).style.transform = 'none';
             });
         });
       }
