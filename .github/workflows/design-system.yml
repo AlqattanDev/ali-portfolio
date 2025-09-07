@@ -1,0 +1,533 @@
+name: Design System Validation
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    # Run weekly on Saturdays at 3 AM UTC
+    - cron: '0 3 * * 6'
+
+jobs:
+  typography-analysis:
+    runs-on: ubuntu-latest
+    name: Typography & Font Analysis
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build site
+        run: npm run build
+        
+      - name: Analyze typography patterns
+        run: |
+          echo "# 📝 Typography Analysis Report" > TYPOGRAPHY_REPORT.md
+          echo "Generated on: $(date)" >> TYPOGRAPHY_REPORT.md
+          echo "" >> TYPOGRAPHY_REPORT.md
+          
+          echo "## Font Usage Analysis" >> TYPOGRAPHY_REPORT.md
+          echo "" >> TYPOGRAPHY_REPORT.md
+          
+          # Extract font families from CSS
+          echo "### Font Families Used" >> TYPOGRAPHY_REPORT.md
+          find dist -name "*.css" -exec grep -h "font-family" {} \; | \
+            sed 's/.*font-family:\s*\([^;]*\);.*/\1/' | \
+            sort -u | \
+            while read font; do
+              echo "- \`$font\`" >> TYPOGRAPHY_REPORT.md
+            done
+          
+          echo "" >> TYPOGRAPHY_REPORT.md
+          
+          # Extract font sizes
+          echo "### Font Sizes Used" >> TYPOGRAPHY_REPORT.md
+          find dist -name "*.css" -exec grep -h -E "font-size:\s*[0-9]" {} \; | \
+            sed 's/.*font-size:\s*\([^;]*\);.*/\1/' | \
+            sort -u | \
+            while read size; do
+              echo "- $size" >> TYPOGRAPHY_REPORT.md
+            done
+          
+          echo "" >> TYPOGRAPHY_REPORT.md
+          
+          # Extract font weights
+          echo "### Font Weights Used" >> TYPOGRAPHY_REPORT.md
+          find dist -name "*.css" -exec grep -h "font-weight" {} \; | \
+            sed 's/.*font-weight:\s*\([^;]*\);.*/\1/' | \
+            sort -u | \
+            while read weight; do
+              echo "- $weight" >> TYPOGRAPHY_REPORT.md
+            done
+          
+          echo "" >> TYPOGRAPHY_REPORT.md
+          echo "## Typography Consistency Recommendations" >> TYPOGRAPHY_REPORT.md
+          echo "- Limit to 2-3 font families maximum" >> TYPOGRAPHY_REPORT.md
+          echo "- Use a consistent scale (e.g., 1.2 or 1.25 ratio)" >> TYPOGRAPHY_REPORT.md
+          echo "- Stick to 3-5 font weights" >> TYPOGRAPHY_REPORT.md
+          echo "- Ensure proper line-height for readability (1.4-1.6)" >> TYPOGRAPHY_REPORT.md
+          
+          cat TYPOGRAPHY_REPORT.md
+          
+      - name: Upload typography report
+        uses: actions/upload-artifact@v4
+        with:
+          name: typography-analysis
+          path: TYPOGRAPHY_REPORT.md
+          retention-days: 30
+
+  color-palette-analysis:
+    runs-on: ubuntu-latest
+    name: Color Palette Consistency
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Setup Python for color analysis
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+          
+      - name: Install color analysis tools
+        run: |
+          pip install colorthief
+          pip install webcolors
+          pip install pillow
+          
+      - name: Build site
+        run: npm run build
+        
+      - name: Extract color palette
+        run: |
+          echo "# 🎨 Color Palette Analysis" > COLOR_REPORT.md
+          echo "Generated on: $(date)" >> COLOR_REPORT.md
+          echo "" >> COLOR_REPORT.md
+          
+          echo "## Extracted Colors from CSS" >> COLOR_REPORT.md
+          echo "" >> COLOR_REPORT.md
+          
+          # Extract hex colors
+          echo "### Hex Colors" >> COLOR_REPORT.md
+          find dist -name "*.css" -exec grep -h -o '#[0-9a-fA-F]\{3,6\}' {} \; | \
+            sort -u | \
+            while read color; do
+              echo "- \`$color\` ![Color](https://via.placeholder.com/20/$color/000000?text=+)" >> COLOR_REPORT.md
+            done
+          
+          echo "" >> COLOR_REPORT.md
+          
+          # Extract RGB colors
+          echo "### RGB Colors" >> COLOR_REPORT.md
+          find dist -name "*.css" -exec grep -h -o 'rgb([^)]*)' {} \; | \
+            sort -u | head -20 | \
+            while read color; do
+              echo "- \`$color\`" >> COLOR_REPORT.md
+            done
+          
+          echo "" >> COLOR_REPORT.md
+          
+          # Extract HSL colors
+          echo "### HSL Colors" >> COLOR_REPORT.md
+          find dist -name "*.css" -exec grep -h -o 'hsl([^)]*)' {} \; | \
+            sort -u | head -20 | \
+            while read color; do
+              echo "- \`$color\`" >> COLOR_REPORT.md
+            done
+          
+          echo "" >> COLOR_REPORT.md
+          
+          # Color usage frequency
+          echo "### Color Usage Frequency" >> COLOR_REPORT.md
+          find dist -name "*.css" -exec grep -h -o '#[0-9a-fA-F]\{3,6\}' {} \; | \
+            sort | uniq -c | sort -nr | head -10 | \
+            while read count color; do
+              echo "- \`$color\`: Used $count times" >> COLOR_REPORT.md
+            done
+          
+          echo "" >> COLOR_REPORT.md
+          echo "## Color Palette Recommendations" >> COLOR_REPORT.md
+          echo "- Limit primary colors to 3-5 main colors" >> COLOR_REPORT.md
+          echo "- Use consistent color naming/variables" >> COLOR_REPORT.md
+          echo "- Ensure sufficient contrast ratios (4.5:1 minimum)" >> COLOR_REPORT.md
+          echo "- Consider implementing CSS custom properties for color management" >> COLOR_REPORT.md
+          
+          cat COLOR_REPORT.md
+          
+      - name: Upload color analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: color-palette-analysis
+          path: COLOR_REPORT.md
+          retention-days: 30
+
+  spacing-consistency:
+    runs-on: ubuntu-latest
+    name: Spacing & Layout Analysis
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Build site
+        run: npm run build
+        
+      - name: Analyze spacing patterns
+        run: |
+          echo "# 📐 Spacing & Layout Analysis" > SPACING_REPORT.md
+          echo "Generated on: $(date)" >> SPACING_REPORT.md
+          echo "" >> SPACING_REPORT.md
+          
+          echo "## Margin Values Used" >> SPACING_REPORT.md
+          find dist -name "*.css" -exec grep -h -E "margin[^:]*:\s*[^;]+" {} \; | \
+            sed 's/.*margin[^:]*:\s*\([^;]*\);.*/\1/' | \
+            sort | uniq -c | sort -nr | head -15 | \
+            while read count value; do
+              echo "- \`$value\`: Used $count times" >> SPACING_REPORT.md
+            done
+          
+          echo "" >> SPACING_REPORT.md
+          
+          echo "## Padding Values Used" >> SPACING_REPORT.md
+          find dist -name "*.css" -exec grep -h -E "padding[^:]*:\s*[^;]+" {} \; | \
+            sed 's/.*padding[^:]*:\s*\([^;]*\);.*/\1/' | \
+            sort | uniq -c | sort -nr | head -15 | \
+            while read count value; do
+              echo "- \`$value\`: Used $count times" >> SPACING_REPORT.md
+            done
+          
+          echo "" >> SPACING_REPORT.md
+          
+          echo "## Gap/Grid Spacing" >> SPACING_REPORT.md
+          find dist -name "*.css" -exec grep -h -E "(gap|grid-gap):\s*[^;]+" {} \; | \
+            sed 's/.*(gap|grid-gap):\s*\([^;]*\);.*/\1/' | \
+            sort | uniq -c | sort -nr | head -10 | \
+            while read count value; do
+              echo "- \`$value\`: Used $count times" >> SPACING_REPORT.md
+            done
+          
+          echo "" >> SPACING_REPORT.md
+          
+          echo "## Spacing System Recommendations" >> SPACING_REPORT.md
+          echo "- Use a consistent spacing scale (e.g., 4px, 8px, 16px, 24px, 32px, 48px, 64px)" >> SPACING_REPORT.md
+          echo "- Implement CSS custom properties for spacing values" >> SPACING_REPORT.md
+          echo "- Consider using rem/em units for responsive spacing" >> SPACING_REPORT.md
+          echo "- Avoid arbitrary spacing values - stick to the system" >> SPACING_REPORT.md
+          
+          cat SPACING_REPORT.md
+          
+      - name: Upload spacing analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: spacing-analysis
+          path: SPACING_REPORT.md
+          retention-days: 30
+
+  component-consistency:
+    runs-on: ubuntu-latest
+    name: Component Pattern Analysis
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install Playwright for DOM analysis
+        run: npx playwright install --with-deps
+        
+      - name: Build and serve site
+        run: |
+          npm ci
+          npm run build
+          npx serve dist -l 3000 &
+          npx wait-on http://localhost:3000 --timeout 60000
+          
+      - name: Analyze component patterns
+        run: |
+          node << 'EOF'
+          const { chromium } = require('playwright');
+          const fs = require('fs');
+          
+          (async () => {
+            const browser = await chromium.launch();
+            const page = await browser.newPage();
+            
+            await page.goto('http://localhost:3000');
+            
+            // Analyze component patterns
+            const analysis = await page.evaluate(() => {
+              const report = {
+                buttons: [],
+                links: [],
+                headings: [],
+                cards: [],
+                forms: []
+              };
+              
+              // Analyze buttons
+              const buttons = document.querySelectorAll('button, [role="button"]');
+              buttons.forEach((btn, i) => {
+                const styles = getComputedStyle(btn);
+                report.buttons.push({
+                  index: i,
+                  classes: btn.className,
+                  styles: {
+                    padding: styles.padding,
+                    borderRadius: styles.borderRadius,
+                    backgroundColor: styles.backgroundColor,
+                    color: styles.color,
+                    fontSize: styles.fontSize,
+                    fontWeight: styles.fontWeight
+                  }
+                });
+              });
+              
+              // Analyze links
+              const links = document.querySelectorAll('a');
+              links.forEach((link, i) => {
+                const styles = getComputedStyle(link);
+                report.links.push({
+                  index: i,
+                  classes: link.className,
+                  styles: {
+                    color: styles.color,
+                    textDecoration: styles.textDecoration,
+                    fontSize: styles.fontSize
+                  }
+                });
+              });
+              
+              // Analyze headings
+              for (let level = 1; level <= 6; level++) {
+                const headings = document.querySelectorAll(`h${level}`);
+                headings.forEach((heading, i) => {
+                  const styles = getComputedStyle(heading);
+                  report.headings.push({
+                    level: level,
+                    index: i,
+                    text: heading.textContent.substring(0, 50),
+                    styles: {
+                      fontSize: styles.fontSize,
+                      fontWeight: styles.fontWeight,
+                      lineHeight: styles.lineHeight,
+                      marginTop: styles.marginTop,
+                      marginBottom: styles.marginBottom
+                    }
+                  });
+                });
+              }
+              
+              return report;
+            });
+            
+            // Generate report
+            let report = "# 🧩 Component Pattern Analysis\\n";
+            report += `Generated on: ${new Date().toISOString()}\\n\\n`;
+            
+            report += "## Button Consistency\\n";
+            const buttonStyles = analysis.buttons.map(b => b.styles);
+            const uniqueButtonStyles = [...new Set(buttonStyles.map(JSON.stringify))].map(JSON.parse);
+            report += `- Found ${analysis.buttons.length} buttons with ${uniqueButtonStyles.length} unique style patterns\\n`;
+            
+            uniqueButtonStyles.forEach((style, i) => {
+              report += `### Button Style Pattern ${i + 1}\\n`;
+              Object.entries(style).forEach(([prop, value]) => {
+                report += `- ${prop}: \`${value}\`\\n`;
+              });
+              report += '\\n';
+            });
+            
+            report += "## Link Consistency\\n";
+            const linkStyles = analysis.links.map(l => l.styles);
+            const uniqueLinkStyles = [...new Set(linkStyles.map(JSON.stringify))].map(JSON.parse);
+            report += `- Found ${analysis.links.length} links with ${uniqueLinkStyles.length} unique style patterns\\n\\n`;
+            
+            report += "## Heading Hierarchy\\n";
+            for (let level = 1; level <= 6; level++) {
+              const levelHeadings = analysis.headings.filter(h => h.level === level);
+              if (levelHeadings.length > 0) {
+                const sizes = [...new Set(levelHeadings.map(h => h.styles.fontSize))];
+                report += `- H${level}: ${levelHeadings.length} instances, font-size: ${sizes.join(', ')}\\n`;
+              }
+            }
+            
+            report += "\\n## Component Consistency Recommendations\\n";
+            report += "- Standardize button styles and states (hover, focus, active)\\n";
+            report += "- Use consistent link styling throughout the site\\n";
+            report += "- Ensure heading hierarchy follows semantic and visual order\\n";
+            report += "- Consider creating component style guides\\n";
+            report += "- Implement design tokens for consistent theming\\n";
+            
+            fs.writeFileSync('COMPONENT_REPORT.md', report);
+            
+            await browser.close();
+          })();
+          EOF
+          
+      - name: Upload component analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: component-analysis
+          path: COMPONENT_REPORT.md
+          retention-days: 30
+
+  css-architecture-analysis:
+    runs-on: ubuntu-latest
+    name: CSS Architecture & Quality
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install CSS analysis tools
+        run: |
+          npm install -g sass
+          npm install -g autoprefixer
+          npm install -g clean-css-cli
+          
+      - name: Build site
+        run: npm run build
+        
+      - name: Analyze CSS architecture
+        run: |
+          echo "# 🏗️ CSS Architecture Analysis" > CSS_ARCHITECTURE_REPORT.md
+          echo "Generated on: $(date)" >> CSS_ARCHITECTURE_REPORT.md
+          echo "" >> CSS_ARCHITECTURE_REPORT.md
+          
+          echo "## CSS File Analysis" >> CSS_ARCHITECTURE_REPORT.md
+          find dist -name "*.css" | while read css_file; do
+            echo "### Analysis of $css_file" >> CSS_ARCHITECTURE_REPORT.md
+            
+            # File size
+            size=$(wc -c < "$css_file")
+            echo "- **File size**: $(($size / 1024))KB" >> CSS_ARCHITECTURE_REPORT.md
+            
+            # Line count
+            lines=$(wc -l < "$css_file")
+            echo "- **Lines of code**: $lines" >> CSS_ARCHITECTURE_REPORT.md
+            
+            # Selector count
+            selectors=$(grep -c '{' "$css_file")
+            echo "- **CSS selectors**: $selectors" >> CSS_ARCHITECTURE_REPORT.md
+            
+            # Media queries
+            media_queries=$(grep -c '@media' "$css_file")
+            echo "- **Media queries**: $media_queries" >> CSS_ARCHITECTURE_REPORT.md
+            
+            # CSS custom properties
+            custom_props=$(grep -c -- '--[a-zA-Z]' "$css_file")
+            echo "- **CSS custom properties**: $custom_props" >> CSS_ARCHITECTURE_REPORT.md
+            
+            # Complexity indicators
+            important_count=$(grep -c '!important' "$css_file")
+            echo "- **!important declarations**: $important_count" >> CSS_ARCHITECTURE_REPORT.md
+            
+            # ID selectors (not recommended)
+            id_selectors=$(grep -c '#[a-zA-Z]' "$css_file")
+            echo "- **ID selectors**: $id_selectors" >> CSS_ARCHITECTURE_REPORT.md
+            
+            echo "" >> CSS_ARCHITECTURE_REPORT.md
+          done
+          
+          echo "## CSS Quality Recommendations" >> CSS_ARCHITECTURE_REPORT.md
+          echo "- Keep CSS files under 100KB for better performance" >> CSS_ARCHITECTURE_REPORT.md
+          echo "- Minimize use of !important declarations" >> CSS_ARCHITECTURE_REPORT.md
+          echo "- Prefer class selectors over ID selectors" >> CSS_ARCHITECTURE_REPORT.md
+          echo "- Use CSS custom properties for theming" >> CSS_ARCHITECTURE_REPORT.md
+          echo "- Organize CSS with a consistent methodology (BEM, OOCSS, etc.)" >> CSS_ARCHITECTURE_REPORT.md
+          echo "- Consider CSS-in-JS or utility-first approaches for component-based apps" >> CSS_ARCHITECTURE_REPORT.md
+          
+          cat CSS_ARCHITECTURE_REPORT.md
+          
+      - name: Upload CSS architecture analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: css-architecture-analysis
+          path: CSS_ARCHITECTURE_REPORT.md
+          retention-days: 30
+
+  design-system-summary:
+    runs-on: ubuntu-latest
+    name: Design System Summary Report
+    needs: [typography-analysis, color-palette-analysis, spacing-consistency, component-consistency, css-architecture-analysis]
+    if: always()
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        
+      - name: Create comprehensive design system report
+        run: |
+          echo "# 🎨 Design System Validation Summary" > DESIGN_SYSTEM_SUMMARY.md
+          echo "Generated on: $(date)" >> DESIGN_SYSTEM_SUMMARY.md
+          echo "" >> DESIGN_SYSTEM_SUMMARY.md
+          
+          echo "## Executive Summary" >> DESIGN_SYSTEM_SUMMARY.md
+          echo "This report provides a comprehensive analysis of the design system consistency across the portfolio website." >> DESIGN_SYSTEM_SUMMARY.md
+          echo "" >> DESIGN_SYSTEM_SUMMARY.md
+          
+          echo "## Analysis Categories" >> DESIGN_SYSTEM_SUMMARY.md
+          echo "- ✅ Typography Analysis" >> DESIGN_SYSTEM_SUMMARY.md
+          echo "- ✅ Color Palette Consistency" >> DESIGN_SYSTEM_SUMMARY.md
+          echo "- ✅ Spacing & Layout Patterns" >> DESIGN_SYSTEM_SUMMARY.md
+          echo "- ✅ Component Pattern Analysis" >> DESIGN_SYSTEM_SUMMARY.md
+          echo "- ✅ CSS Architecture Review" >> DESIGN_SYSTEM_SUMMARY.md
+          echo "" >> DESIGN_SYSTEM_SUMMARY.md
+          
+          echo "## Key Recommendations" >> DESIGN_SYSTEM_SUMMARY.md
+          echo "1. **Implement Design Tokens**: Create a centralized system for colors, typography, and spacing" >> DESIGN_SYSTEM_SUMMARY.md
+          echo "2. **Component Library**: Develop reusable components with consistent styling" >> DESIGN_SYSTEM_SUMMARY.md
+          echo "3. **Style Guide**: Document design patterns and usage guidelines" >> DESIGN_SYSTEM_SUMMARY.md
+          echo "4. **Automated Testing**: Implement visual regression testing for design consistency" >> DESIGN_SYSTEM_SUMMARY.md
+          echo "5. **Performance**: Optimize CSS delivery and eliminate unused styles" >> DESIGN_SYSTEM_SUMMARY.md
+          echo "" >> DESIGN_SYSTEM_SUMMARY.md
+          
+          echo "## Detailed Reports" >> DESIGN_SYSTEM_SUMMARY.md
+          echo "Detailed analysis reports are available as individual artifacts:" >> DESIGN_SYSTEM_SUMMARY.md
+          echo "- Typography Analysis" >> DESIGN_SYSTEM_SUMMARY.md
+          echo "- Color Palette Analysis" >> DESIGN_SYSTEM_SUMMARY.md
+          echo "- Spacing Analysis" >> DESIGN_SYSTEM_SUMMARY.md
+          echo "- Component Analysis" >> DESIGN_SYSTEM_SUMMARY.md
+          echo "- CSS Architecture Analysis" >> DESIGN_SYSTEM_SUMMARY.md
+          
+          cat DESIGN_SYSTEM_SUMMARY.md
+          
+      - name: Upload comprehensive summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: design-system-summary-report
+          path: DESIGN_SYSTEM_SUMMARY.md
+          retention-days: 60
