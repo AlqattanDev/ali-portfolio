@@ -710,14 +710,14 @@
           });
 
         // Animation function for mode switching
-        function animateSwitch(toDigital) {
+        function animateSwitch(toDigital: boolean) {
           // Disable pointer events during animation
-          switcher.style.pointerEvents = 'none';
+          if (switcher) switcher.style.pointerEvents = 'none';
           
           // Create animation timeline
           const tl = gsap.timeline({ 
             onComplete: () => {
-              switcher.style.pointerEvents = 'auto';
+              if (switcher) switcher.style.pointerEvents = 'auto';
             }
           });
 
@@ -833,7 +833,7 @@
         });
 
         // Keyboard support
-        switcher.addEventListener('keydown', (event) => {
+        switcher.addEventListener('keydown', (event: any) => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             switcher.click();
