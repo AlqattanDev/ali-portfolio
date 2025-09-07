@@ -1,0 +1,332 @@
+name: Automated Image Optimization
+
+on:
+  pull_request:
+    paths:
+      - 'public/**/*.png'
+      - 'public/**/*.jpg'
+      - 'public/**/*.jpeg'
+      - 'public/**/*.webp'
+      - 'src/**/*.png'
+      - 'src/**/*.jpg'
+      - 'src/**/*.jpeg'
+      - 'src/**/*.webp'
+  push:
+    paths:
+      - 'public/**/*.png'
+      - 'public/**/*.jpg'
+      - 'public/**/*.jpeg'
+      - 'public/**/*.webp'
+      - 'src/**/*.png'
+      - 'src/**/*.jpg'
+      - 'src/**/*.jpeg'
+      - 'src/**/*.webp'
+    branches: [main]
+
+jobs:
+  optimize-images:
+    runs-on: ubuntu-latest
+    name: Optimize Images for Web
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Install image optimization tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jpegoptim optipng pngquant gifsicle webp
+          npm install -g imagemin-cli
+          npm install -g sharp-cli
+          
+      - name: Create optimized directory structure
+        run: |
+          mkdir -p optimized/public
+          mkdir -p optimized/src
+          
+      - name: Optimize PNG images
+        run: |
+          find public src -name "*.png" -type f | while read img; do
+            echo "Optimizing PNG: $img"
+            original_size=$(wc -c < "$img")
+            
+            # Create WebP version
+            webp_file="optimized/${img%.*}.webp"
+            mkdir -p "$(dirname "$webp_file")"
+            cwebp -q 85 "$img" -o "$webp_file"
+            
+            # Optimize original PNG
+            optimized_png="optimized/$img"
+            mkdir -p "$(dirname "$optimized_png")"
+            cp "$img" "$optimized_png"
+            optipng -o2 "$optimized_png" > /dev/null 2>&1
+            pngquant --quality=80-95 --force --output "$optimized_png" "$optimized_png" > /dev/null 2>&1 || true
+            
+            optimized_size=$(wc -c < "$optimized_png")
+            webp_size=$(wc -c < "$webp_file")
+            
+            echo "  Original: ${original_size} bytes"
+            echo "  Optimized PNG: ${optimized_size} bytes ($(( (original_size - optimized_size) * 100 / original_size ))% reduction)"
+            echo "  WebP: ${webp_size} bytes ($(( (original_size - webp_size) * 100 / original_size ))% reduction)"
+          done
+          
+      - name: Optimize JPEG images
+        run: |
+          find public src -name "*.jpg" -o -name "*.jpeg" -type f | while read img; do
+            echo "Optimizing JPEG: $img"
+            original_size=$(wc -c < "$img")
+            
+            # Create WebP version
+            webp_file="optimized/${img%.*}.webp"
+            mkdir -p "$(dirname "$webp_file")"
+            cwebp -q 85 "$img" -o "$webp_file"
+            
+            # Optimize original JPEG
+            optimized_jpg="optimized/$img"
+            mkdir -p "$(dirname "$optimized_jpg")"
+            cp "$img" "$optimized_jpg"
+            jpegoptim --max=85 --strip-all "$optimized_jpg" > /dev/null 2>&1
+            
+            optimized_size=$(wc -c < "$optimized_jpg")
+            webp_size=$(wc -c < "$webp_file")
+            
+            echo "  Original: ${original_size} bytes"
+            echo "  Optimized JPEG: ${optimized_size} bytes ($(( (original_size - optimized_size) * 100 / original_size ))% reduction)"
+            echo "  WebP: ${webp_size} bytes ($(( (original_size - webp_size) * 100 / original_size ))% reduction)"
+          done
+
+      - name: Generate responsive image variants
+        run: |
+          find public src -name "*.jpg" -o -name "*.jpeg" -o -name "*.png" -type f | while read img; do
+            base_name="${img%.*}"
+            ext="${img##*.}"
+            optimized_base="optimized/${base_name}"
+            mkdir -p "$(dirname "$optimized_base")"
+            
+            echo "Creating responsive variants for: $img"
+            
+            # Get image dimensions
+            width=$(identify -format "%w" "$img")
+            height=$(identify -format "%h" "$img")
+            
+            # Only create smaller variants if image is large enough
+            if [ "$width" -gt 800 ]; then
+              # Create 800px wide version
+              convert "$img" -resize 800x -quality 85 "${optimized_base}-800w.${ext}"
+              cwebp -q 85 -resize 800 0 "$img" -o "${optimized_base}-800w.webp"
+            fi
+            
+            if [ "$width" -gt 1200 ]; then
+              # Create 1200px wide version
+              convert "$img" -resize 1200x -quality 85 "${optimized_base}-1200w.${ext}"
+              cwebp -q 85 -resize 1200 0 "$img" -o "${optimized_base}-1200w.webp"
+            fi
+            
+            if [ "$width" -gt 1600 ]; then
+              # Create 1600px wide version (for high-DPI)
+              convert "$img" -resize 1600x -quality 80 "${optimized_base}-1600w.${ext}"
+              cwebp -q 80 -resize 1600 0 "$img" -o "${optimized_base}-1600w.webp"
+            fi
+          done
+
+      - name: Create optimization report
+        run: |
+          echo "# 🖼️ Image Optimization Report" > IMAGE_OPTIMIZATION_REPORT.md
+          echo "Generated on: $(date)" >> IMAGE_OPTIMIZATION_REPORT.md
+          echo "" >> IMAGE_OPTIMIZATION_REPORT.md
+          
+          total_original=0
+          total_optimized=0
+          total_webp=0
+          image_count=0
+          
+          echo "## Optimization Results" >> IMAGE_OPTIMIZATION_REPORT.md
+          echo "" >> IMAGE_OPTIMIZATION_REPORT.md
+          echo "| Original File | Original Size | Optimized Size | WebP Size | Savings |" >> IMAGE_OPTIMIZATION_REPORT.md
+          echo "|---------------|---------------|----------------|-----------|---------|" >> IMAGE_OPTIMIZATION_REPORT.md
+          
+          find public src -name "*.jpg" -o -name "*.jpeg" -o -name "*.png" -type f | while read img; do
+            if [ -f "optimized/$img" ]; then
+              original_size=$(wc -c < "$img")
+              optimized_size=$(wc -c < "optimized/$img")
+              webp_file="optimized/${img%.*}.webp"
+              
+              if [ -f "$webp_file" ]; then
+                webp_size=$(wc -c < "$webp_file")
+              else
+                webp_size=0
+              fi
+              
+              savings_pct=$(( (original_size - optimized_size) * 100 / original_size ))
+              webp_savings_pct=$(( (original_size - webp_size) * 100 / original_size ))
+              
+              echo "| $img | $(( original_size / 1024 ))KB | $(( optimized_size / 1024 ))KB | $(( webp_size / 1024 ))KB | ${savings_pct}% / ${webp_savings_pct}% |" >> IMAGE_OPTIMIZATION_REPORT.md
+              
+              total_original=$((total_original + original_size))
+              total_optimized=$((total_optimized + optimized_size))
+              total_webp=$((total_webp + webp_size))
+              image_count=$((image_count + 1))
+            fi
+          done
+          
+          echo "" >> IMAGE_OPTIMIZATION_REPORT.md
+          echo "## Summary" >> IMAGE_OPTIMIZATION_REPORT.md
+          echo "- **Images processed**: $image_count" >> IMAGE_OPTIMIZATION_REPORT.md
+          echo "- **Total original size**: $(( total_original / 1024 ))KB" >> IMAGE_OPTIMIZATION_REPORT.md
+          echo "- **Total optimized size**: $(( total_optimized / 1024 ))KB" >> IMAGE_OPTIMIZATION_REPORT.md
+          echo "- **Total WebP size**: $(( total_webp / 1024 ))KB" >> IMAGE_OPTIMIZATION_REPORT.md
+          
+          if [ $total_original -gt 0 ]; then
+            overall_savings=$(( (total_original - total_optimized) * 100 / total_original ))
+            webp_overall_savings=$(( (total_original - total_webp) * 100 / total_original ))
+            echo "- **Overall savings**: ${overall_savings}% (optimized), ${webp_overall_savings}% (WebP)" >> IMAGE_OPTIMIZATION_REPORT.md
+          fi
+          
+          echo "" >> IMAGE_OPTIMIZATION_REPORT.md
+          echo "## Recommendations" >> IMAGE_OPTIMIZATION_REPORT.md
+          echo "1. Use WebP format for modern browsers with fallbacks" >> IMAGE_OPTIMIZATION_REPORT.md
+          echo "2. Implement responsive images with srcset attribute" >> IMAGE_OPTIMIZATION_REPORT.md
+          echo "3. Consider lazy loading for below-fold images" >> IMAGE_OPTIMIZATION_REPORT.md
+          echo "4. Add proper alt text for accessibility" >> IMAGE_OPTIMIZATION_REPORT.md
+          
+          cat IMAGE_OPTIMIZATION_REPORT.md
+
+      - name: Check if optimization provides significant savings
+        id: check-savings
+        run: |
+          total_original=0
+          total_optimized=0
+          
+          find public src -name "*.jpg" -o -name "*.jpeg" -o -name "*.png" -type f | while read img; do
+            if [ -f "optimized/$img" ]; then
+              original_size=$(wc -c < "$img")
+              optimized_size=$(wc -c < "optimized/$img")
+              total_original=$((total_original + original_size))
+              total_optimized=$((total_optimized + optimized_size))
+            fi
+          done
+          
+          if [ $total_original -gt 0 ]; then
+            savings_pct=$(( (total_original - total_optimized) * 100 / total_original ))
+            echo "savings_percentage=$savings_pct" >> $GITHUB_OUTPUT
+            
+            if [ $savings_pct -gt 10 ]; then
+              echo "significant_savings=true" >> $GITHUB_OUTPUT
+            else
+              echo "significant_savings=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "savings_percentage=0" >> $GITHUB_OUTPUT
+            echo "significant_savings=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create PR with optimized images
+        if: github.event_name == 'push' && steps.check-savings.outputs.significant_savings == 'true'
+        run: |
+          # Copy optimized images back to original locations
+          find optimized -type f | while read optimized_file; do
+            original_file="${optimized_file#optimized/}"
+            if [[ "$optimized_file" != *.webp ]] && [[ "$optimized_file" != *-*w.* ]]; then
+              cp "$optimized_file" "$original_file"
+            fi
+          done
+          
+          # Configure git
+          git config --global user.name 'Image Optimizer Bot'
+          git config --global user.email 'optimizer@github-actions.bot'
+          
+          # Create new branch
+          branch_name="optimize-images-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b "$branch_name"
+          
+          # Commit changes
+          git add .
+          if git diff --staged --quiet; then
+            echo "No optimization improvements to commit"
+          else
+            git commit -m "📸 Optimize images for better web performance
+
+- Reduced image sizes by ${{ steps.check-savings.outputs.savings_percentage }}%
+- Generated WebP variants for modern browsers
+- Created responsive image variants
+- Automated optimization via GitHub Actions
+
+Co-Authored-By: Image Optimizer <optimizer@github-actions.bot>"
+            
+            # Push branch
+            git push origin "$branch_name"
+            
+            # Create pull request using GitHub CLI
+            echo "Creating pull request for image optimization..."
+            gh pr create \
+              --title "📸 Automated Image Optimization" \
+              --body "## 🖼️ Image Optimization Results
+
+This PR contains automatically optimized images that reduce file sizes by **${{ steps.check-savings.outputs.savings_percentage }}%**.
+
+### What's included:
+- ✅ Optimized PNG and JPEG files
+- ✅ WebP variants for modern browsers
+- ✅ Responsive image variants (800w, 1200w, 1600w)
+- ✅ Detailed optimization report
+
+### Performance Benefits:
+- 🚀 Faster page load times
+- 📱 Better mobile experience
+- 🌍 Reduced bandwidth usage
+- ⚡ Improved Core Web Vitals
+
+Please review the optimization report artifact for detailed savings information." \
+              --head "$branch_name" \
+              --base main
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload optimization artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: optimized-images
+          path: |
+            optimized/
+            IMAGE_OPTIMIZATION_REPORT.md
+          retention-days: 30
+
+      - name: Comment on PR with results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let comment = `## 🖼️ Image Optimization Analysis
+            
+            This PR includes image changes. Here's the optimization analysis:
+            
+            `;
+            
+            try {
+              const report = fs.readFileSync('IMAGE_OPTIMIZATION_REPORT.md', 'utf8');
+              comment += report;
+            } catch (error) {
+              comment += "Optimization report not available.";
+            }
+            
+            comment += `
+            
+            💡 **Tip**: The optimized images and WebP variants are available as build artifacts.
+            Consider implementing responsive images and WebP support for better performance!`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
