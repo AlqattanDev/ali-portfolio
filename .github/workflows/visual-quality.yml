@@ -31,17 +31,18 @@ jobs:
         run: npm run build
         
       - name: Serve built site
-        run: npx serve dist -l 3000 &
+        run: npm run preview &
         
       - name: Wait for server
-        run: npx wait-on http://localhost:3000 --timeout 60000
+        run: npx wait-on http://localhost:4321/ali-portfolio --timeout 60000
         
       - name: Run Lighthouse CI
         uses: treosh/lighthouse-ci-action@v11
         with:
-          configPath: './.lighthouserc.json'
+          configPath: './.lighthouserc.js'
           uploadArtifacts: true
           temporaryPublicStorage: true
+          artifactName: lighthouse-results
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -69,7 +70,7 @@ jobs:
         run: npm run dev &
         
       - name: Wait for server
-        run: npx wait-on http://localhost:4321 --timeout 60000
+        run: npx wait-on http://localhost:4321/ali-portfolio --timeout 60000
         
       - name: Run visual regression tests
         run: npm run test:visual
@@ -102,16 +103,16 @@ jobs:
       - name: Build and serve site
         run: |
           npm run build
-          npx serve dist -l 3000 &
-          npx wait-on http://localhost:3000 --timeout 60000
+          npm run preview &
+          npx wait-on http://localhost:4321/ali-portfolio --timeout 60000
           
       - name: Install axe-core CLI
         run: npm install -g @axe-core/cli
         
       - name: Run accessibility audit
         run: |
-          axe http://localhost:3000 --save accessibility-results.json
-          axe http://localhost:3000 --reporter=json > accessibility-report.json
+          axe http://localhost:4321/ali-portfolio --save accessibility-results.json
+          axe http://localhost:4321/ali-portfolio --reporter=json > accessibility-report.json
         continue-on-error: true
         
       - name: Install Pa11y for additional checks
@@ -119,8 +120,8 @@ jobs:
         
       - name: Run Pa11y accessibility tests
         run: |
-          pa11y http://localhost:3000 --reporter json > pa11y-report.json
-          pa11y http://localhost:3000 --standard WCAG2AA --reporter cli
+          pa11y http://localhost:4321/ali-portfolio --reporter json > pa11y-report.json
+          pa11y http://localhost:4321/ali-portfolio --standard WCAG2AA --reporter cli
         continue-on-error: true
         
       - name: Upload accessibility reports
@@ -156,7 +157,7 @@ jobs:
         run: npm run dev &
         
       - name: Wait for server
-        run: npx wait-on http://localhost:4321 --timeout 60000
+        run: npx wait-on http://localhost:4321/ali-portfolio --timeout 60000
         
       - name: Run color contrast tests
         run: npx playwright test tests/accessibility/color-contrast.spec.js --reporter=html
@@ -301,8 +302,8 @@ jobs:
         run: |
           npm ci
           npm run build
-          npx serve dist -l 3000 &
-          npx wait-on http://localhost:3000 --timeout 60000
+          npm run preview &
+          npx wait-on http://localhost:4321/ali-portfolio --timeout 60000
           
       - name: Analyze content readability
         run: |
@@ -313,7 +314,7 @@ jobs:
           import json
           
           # Fetch the homepage
-          response = requests.get('http://localhost:3000')
+          response = requests.get('http://localhost:4321/ali-portfolio')
           soup = BeautifulSoup(response.content, 'html.parser')
           
           # Extract text content
