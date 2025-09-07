@@ -16,7 +16,7 @@
     <link rel="icon" type="image/svg+xml" href="/ali-portfolio/favicon.svg">
     
     <!-- Load particles.js library -->
-    <script is:inline src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js" crossorigin="anonymous"></script>
+    <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js" crossorigin="anonymous"></script>
 </head>
 <body class="digital-view">
 
@@ -52,8 +52,10 @@
     <script is:inline>
       // Wait for particles.js to load and initialize - strict mode compatible
       function initParticles() {
+        // Check if particles.js is loaded
         if (typeof window.particlesJS !== 'undefined' && window.particlesJS) {
           try {
+            console.log('Initializing particles.js...');
             window.particlesJS('particles-js', {
             "particles": {
               "number": {
@@ -139,16 +141,30 @@
             }
           }
         } else {
-          console.log('particles.js not loaded, retrying...');
-          setTimeout(initParticles, 100);
+          console.log('particles.js not loaded, retrying in 200ms...');
+          setTimeout(initParticles, 200);
         }
       }
 
-      // Initialize when DOM is ready
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initParticles);
-      } else {
+      // Initialize with better timing
+      let attempts = 0;
+      const maxAttempts = 25; // 5 seconds max
+      
+      function retryInit() {
+        attempts++;
+        if (attempts > maxAttempts) {
+          console.warn('Failed to load particles.js after multiple attempts');
+          return;
+        }
         initParticles();
+      }
+      
+      // Start immediately and also when DOM is ready
+      setTimeout(retryInit, 100);
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', retryInit);
+      } else {
+        retryInit();
       }
     </script>
 
