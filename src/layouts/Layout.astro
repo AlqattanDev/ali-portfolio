@@ -589,27 +589,26 @@
       /* Enhanced Mode Switcher with Animations (T023-T024) */
       .view-switcher {
         position: absolute;
-        top: 0;
-        right: 0;
+        top: var(--space-4);
+        right: var(--space-4);
         background: transparent;
-        border: 2px solid var(--border-primary);
+        border: 2px solid var(--accent-primary);
         color: var(--text-primary);
         padding: var(--space-2);
         cursor: pointer;
         font-family: var(--font-mono);
         font-size: var(--text-xs);
-        transition: all var(--duration-normal) var(--ease-out-cubic);
+        width: 48px;
+        height: 48px;
+        min-width: 48px;
+        min-height: 48px;
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 44px;
-        height: 44px;
         border-radius: var(--space-1);
-        position: relative;
         overflow: hidden;
-        min-width: 44px; /* Ensure minimum touch target size */
-        min-height: 44px;
         z-index: 100;
+        transition: all var(--duration-normal) var(--ease-out-cubic);
       }
 
       /* Mode switcher states */
