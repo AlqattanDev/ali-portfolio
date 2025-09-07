@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ali AlQattan - Particle Effect</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000000;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <script type="module">
+        const ASCII_TEXT = `
+ █████╗ ██╗     ██╗    ██████╗ ██╗      █████╗ ████████╗████████╗ █████╗ ███╗   ██╗
+██╔══██╗██║     ██║   ██╔═══██╗██║     ██╔══██╗╚══██╔══╝╚══██╔══╝██╔══██╗████╗  ██║
+███████║██║     ██║   ██║   ██║██║     ███████║   ██║      ██║   ███████║██╔██╗ ██║
+██╔══██║██║     ██║   ██║▄▄ ██║██║     ██╔══██║   ██║      ██║   ██╔══██║██║╚██╗██║
+██║  ██║███████╗██║   ╚██████╔╝███████╗██║  ██║   ██║      ██║   ██║  ██║██║ ╚████║
+╚═╝  ╚═╝╚══════╝╚═╝    ╚══▀▀═╝ ╚══════╝╚═╝  ╚═╝   ╚═╝      ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝
+        `.trim();
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const mousePosition = { x: 0, y: 0 };
+        let isHovering = false;
+        const isMobile = window.innerWidth < 768;
+
+        function updateCanvasSize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function createParticles() {
+            particles = [];
+            
+            const fontSize = isMobile ? 12 : 16;
+            ctx.font = `${fontSize}px 'Courier New', monospace`;
+            
+            const lines = ASCII_TEXT.split('\n');
+            const lineHeight = fontSize * 1.2;
+            const totalHeight = lines.length * lineHeight;
+            
+            const startX = canvas.width / 2 - 400;
+            const startY = canvas.height / 2 - totalHeight / 2;
+            
+            lines.forEach((line, lineIndex) => {
+                for (let charIndex = 0; charIndex < line.length; charIndex++) {
+                    const char = line[charIndex];
+                    if (char !== ' ') {
+                        const x = startX + charIndex * (fontSize * 0.6);
+                        const y = startY + lineIndex * lineHeight;
+                        
+                        particles.push({
+                            char: char,
+                            originalChar: char,
+                            x: x,
+                            y: y,
+                            baseX: x,
+                            baseY: y,
+                            offsetX: 0,
+                            offsetY: 0,
+                            size: fontSize,
+                            isScrambled: false,
+                            scrambleTimer: 0
+                        });
+                    }
+                }
+            });
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = `${particles[0]?.size || 16}px 'Courier New', monospace`;
+
+            particles.forEach(particle => {
+                const distance = Math.sqrt(
+                    Math.pow(mousePosition.x - (particle.baseX + particle.offsetX), 2) + 
+                    Math.pow(mousePosition.y - (particle.baseY + particle.offsetY), 2)
+                );
+
+                if (distance < 100 && isHovering) {
+                    // Binary scramble effect
+                    particle.isScrambled = true;
+                    particle.scrambleTimer = 30;
+                    
+                    // Replace with random binary/hex characters
+                    const codeChars = ['0', '1', '0', '1', 'A', 'F', '0', '1', 'E', 'C', '0', '1'];
+                    particle.char = codeChars[Math.floor(Math.random() * codeChars.length)];
+                    
+                    // Digital scatter - grid-based movement
+                    const gridSize = 8;
+                    particle.offsetX += (Math.random() > 0.5 ? gridSize : -gridSize) * Math.random();
+                    particle.offsetY += (Math.random() > 0.5 ? gridSize : -gridSize) * Math.random();
+                    
+                    ctx.fillStyle = '#FF4444'; // Nothing red accent
+                } else {
+                    // Return to original state
+                    particle.offsetX *= 0.85;
+                    particle.offsetY *= 0.85;
+                    
+                    if (particle.scrambleTimer > 0) {
+                        particle.scrambleTimer--;
+                        // Keep scrambling for a bit
+                        const codeChars = ['0', '1', '0', '1', 'A', 'F', '0', '1'];
+                        particle.char = codeChars[Math.floor(Math.random() * codeChars.length)];
+                        ctx.fillStyle = '#FF4444'; // Nothing red
+                    } else {
+                        // Return to original character
+                        particle.char = particle.originalChar;
+                        particle.isScrambled = false;
+                        ctx.fillStyle = '#FFFFFF'; // Pure white
+                    }
+                }
+
+                ctx.fillText(
+                    particle.char, 
+                    particle.baseX + particle.offsetX, 
+                    particle.baseY + particle.offsetY
+                );
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // Event listeners
+        canvas.addEventListener('mousemove', (e) => {
+            mousePosition.x = e.clientX;
+            mousePosition.y = e.clientY;
+            isHovering = true;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isHovering = false;
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            mousePosition.x = touch.clientX;
+            mousePosition.y = touch.clientY;
+            isHovering = true;
+        });
+
+        canvas.addEventListener('touchend', () => {
+            isHovering = false;
+        });
+
+        // Initialize
+        updateCanvasSize();
+        createParticles();
+        animate();
+
+        window.addEventListener('resize', () => {
+            updateCanvasSize();
+            createParticles();
+        });
+    </script>
+</body>
+</html>

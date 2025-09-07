@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ali AlQattan - Hacker Animations</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000000;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+        }
+        canvas {
+            display: block;
+        }
+        .controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: #00ff00;
+            background: rgba(0,0,0,0.9);
+            padding: 15px;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+        }
+        .controls button {
+            display: block;
+            margin: 6px 0;
+            padding: 8px 12px;
+            background: #001100;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            border-radius: 2px;
+            cursor: pointer;
+            width: 220px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+        }
+        .controls button:hover {
+            background: #002200;
+            box-shadow: 0 0 5px #00ff00;
+        }
+        .controls button.active {
+            background: #00ff00;
+            color: #000000;
+        }
+        .terminal-text {
+            color: #00ff00;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div class="controls">
+        <div class="terminal-text" style="margin-bottom: 15px;">[HACKER ANIMATIONS]</div>
+        <button onclick="setAnimation('terminal')" class="active">$ Terminal Hack</button>
+        <button onclick="setAnimation('decrypt')">🔓 Decryption Sequence</button>
+        <button onclick="setAnimation('compile')">⚙️ Code Compilation</button>
+        <button onclick="setAnimation('neural')">🧠 Neural Network</button>
+        <button onclick="setAnimation('virus')">🦠 Virus Injection</button>
+        <button onclick="setAnimation('firewall')">🛡️ Firewall Breach</button>
+        <button onclick="setAnimation('ddos')">💥 DDoS Attack</button>
+        <button onclick="setAnimation('exploit')">🎯 Buffer Overflow</button>
+        <button onclick="setAnimation('ai')">🤖 AI Processing</button>
+        <button onclick="setAnimation('quantum')">⚛️ Quantum Computing</button>
+    </div>
+    
+    <script type="module">
+        const ASCII_TEXT = `
+ █████╗ ██╗     ██╗      █████╗ ██╗      ██████╗  █████╗ ████████╗████████╗ █████╗ ███╗   ██╗
+██╔══██╗██║     ██║     ██╔══██╗██║     ██╔═══██╗██╔══██╗╚══██╔══╝╚══██╔══╝██╔══██╗████╗  ██║
+███████║██║     ██║     ███████║██║     ██║   ██║███████║   ██║      ██║   ███████║██╔██╗ ██║
+██╔══██║██║     ██║     ██╔══██║██║     ██║▄▄ ██║██╔══██║   ██║      ██║   ██╔══██║██║╚██╗██║
+██║  ██║███████╗██║     ██║  ██║███████╗╚██████╔╝██║  ██║   ██║      ██║   ██║  ██║██║ ╚████║
+╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═╝╚══════╝ ╚══▀▀═╝ ╚═╝  ╚═╝   ╚═╝      ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝
+        `.trim();
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const mousePosition = { x: 0, y: 0 };
+        let isHovering = false;
+        let currentAnimation = 'terminal';
+        let animationTime = 0;
+        const isMobile = window.innerWidth < 768;
+
+        function updateCanvasSize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function createParticles() {
+            particles = [];
+            const fontSize = isMobile ? 12 : 16;
+            const lines = ASCII_TEXT.split('\n');
+            const lineHeight = fontSize * 1.2;
+            const totalHeight = lines.length * lineHeight;
+            const startX = canvas.width / 2 - 450;
+            const startY = canvas.height / 2 - totalHeight / 2;
+            
+            lines.forEach((line, lineIndex) => {
+                for (let charIndex = 0; charIndex < line.length; charIndex++) {
+                    const char = line[charIndex];
+                    if (char !== ' ') {
+                        const x = startX + charIndex * (fontSize * 0.6);
+                        const y = startY + lineIndex * lineHeight;
+                        
+                        particles.push({
+                            char: char,
+                            originalChar: char,
+                            x: x,
+                            y: y,
+                            baseX: x,
+                            baseY: y,
+                            offsetX: 0,
+                            offsetY: 0,
+                            size: fontSize,
+                            opacity: 1,
+                            phase: Math.random() * Math.PI * 2,
+                            delay: Math.random() * 100,
+                            hackState: 0,
+                            isDecrypted: false
+                        });
+                    }
+                }
+            });
+        }
+
+        function animate() {
+            animationTime++;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.font = `${particles[0]?.size || 16}px 'Courier New', monospace`;
+
+            particles.forEach((particle, index) => {
+                const distance = Math.sqrt(
+                    Math.pow(mousePosition.x - particle.baseX, 2) + 
+                    Math.pow(mousePosition.y - particle.baseY, 2)
+                );
+
+                switch(currentAnimation) {
+                    case 'terminal':
+                        if (distance < 120 && isHovering) {
+                            const terminalChars = ['$', '>', '#', '~', '/', '\\', '|', '-'];
+                            particle.char = terminalChars[Math.floor(Math.random() * terminalChars.length)];
+                            ctx.fillStyle = '#00ff00';
+                        } else {
+                            particle.char = particle.originalChar;
+                            ctx.fillStyle = '#ffffff';
+                        }
+                        break;
+
+                    case 'decrypt':
+                        if (distance < 100 && isHovering) {
+                            if (!particle.isDecrypted) {
+                                const cryptoChars = ['@', '#', '%', '&', '*', '+', '=', '?'];
+                                particle.char = cryptoChars[Math.floor(Math.random() * cryptoChars.length)];
+                                particle.hackState++;
+                                if (particle.hackState > 30) {
+                                    particle.isDecrypted = true;
+                                    particle.char = particle.originalChar;
+                                }
+                                ctx.fillStyle = '#ff0000';
+                            } else {
+                                ctx.fillStyle = '#00ff00';
+                            }
+                        } else {
+                            particle.isDecrypted = false;
+                            particle.hackState = 0;
+                            particle.char = particle.originalChar;
+                            ctx.fillStyle = '#ffffff';
+                        }
+                        break;
+
+                    case 'compile':
+                        particle.phase += 0.1;
+                        if (distance < 100 && isHovering) {
+                            const codeChars = ['{', '}', '(', ')', '[', ']', ';', ':', '='];
+                            particle.char = codeChars[Math.floor(Math.random() * codeChars.length)];
+                            ctx.fillStyle = '#ffaa00';
+                        } else {
+                            particle.char = particle.originalChar;
+                            ctx.fillStyle = '#ffffff';
+                        }
+                        break;
+
+                    case 'neural':
+                        particle.phase += 0.2;
+                        const pulse = Math.sin(particle.phase + index * 0.1) * 0.5 + 0.5;
+                        particle.offsetX = Math.sin(particle.phase) * 5;
+                        if (distance < 100 && isHovering) {
+                            ctx.fillStyle = `rgba(0, 255, 255, ${pulse})`;
+                            ctx.shadowColor = '#00ffff';
+                            ctx.shadowBlur = 10;
+                        } else {
+                            ctx.fillStyle = `rgba(255, 255, 255, ${pulse * 0.7})`;
+                            ctx.shadowBlur = 0;
+                        }
+                        break;
+
+                    case 'virus':
+                        if (distance < 150 && isHovering) {
+                            particle.hackState++;
+                            const virusChars = ['X', '!', '?', '*', '#', '@'];
+                            particle.char = virusChars[Math.floor(Math.random() * virusChars.length)];
+                            particle.offsetX += (Math.random() - 0.5) * 8;
+                            particle.offsetY += (Math.random() - 0.5) * 8;
+                            ctx.fillStyle = '#ff0000';
+                        } else {
+                            particle.offsetX *= 0.9;
+                            particle.offsetY *= 0.9;
+                            particle.char = particle.originalChar;
+                            ctx.fillStyle = '#ffffff';
+                        }
+                        break;
+
+                    case 'firewall':
+                        if (distance < 100 && isHovering) {
+                            const firewallChars = ['█', '▓', '▒', '░', '■', '□'];
+                            particle.char = firewallChars[Math.floor(Math.random() * firewallChars.length)];
+                            ctx.fillStyle = '#ff4400';
+                        } else {
+                            particle.char = particle.originalChar;
+                            ctx.fillStyle = '#ffffff';
+                        }
+                        break;
+
+                    case 'ddos':
+                        if (distance < 120 && isHovering) {
+                            particle.offsetX += (Math.random() - 0.5) * 15;
+                            particle.offsetY += (Math.random() - 0.5) * 15;
+                            const attackChars = ['>', '<', '^', 'v', '|', '-', '+'];
+                            particle.char = attackChars[Math.floor(Math.random() * attackChars.length)];
+                            ctx.fillStyle = '#ff0066';
+                        } else {
+                            particle.offsetX *= 0.8;
+                            particle.offsetY *= 0.8;
+                            particle.char = particle.originalChar;
+                            ctx.fillStyle = '#ffffff';
+                        }
+                        break;
+
+                    case 'exploit':
+                        if (distance < 100 && isHovering) {
+                            particle.hackState++;
+                            if (particle.hackState % 10 === 0) {
+                                const exploitChars = ['0x', 'FF', 'AA', 'BB', 'CC', 'DD'];
+                                particle.char = exploitChars[Math.floor(Math.random() * exploitChars.length)];
+                            }
+                            ctx.fillStyle = '#aa00ff';
+                        } else {
+                            particle.char = particle.originalChar;
+                            ctx.fillStyle = '#ffffff';
+                        }
+                        break;
+
+                    case 'ai':
+                        particle.phase += 0.15;
+                        const aiPulse = Math.sin(particle.phase * 2) * 0.3 + 0.7;
+                        if (distance < 100 && isHovering) {
+                            const aiChars = ['λ', 'Σ', 'Δ', 'Ω', 'α', 'β', 'γ'];
+                            particle.char = aiChars[Math.floor(Math.random() * aiChars.length)];
+                            ctx.fillStyle = `rgba(0, 255, 100, ${aiPulse})`;
+                        } else {
+                            particle.char = particle.originalChar;
+                            ctx.fillStyle = `rgba(255, 255, 255, ${aiPulse})`;
+                        }
+                        break;
+
+                    case 'quantum':
+                        particle.phase += 0.3;
+                        const quantum = Math.sin(particle.phase) > 0.5;
+                        if (quantum) {
+                            particle.opacity = Math.random();
+                            particle.offsetX = (Math.random() - 0.5) * 20;
+                        } else {
+                            particle.opacity = 1;
+                            particle.offsetX *= 0.9;
+                        }
+                        if (distance < 100 && isHovering) {
+                            ctx.fillStyle = `rgba(255, 0, 255, ${particle.opacity})`;
+                        } else {
+                            ctx.fillStyle = `rgba(255, 255, 255, ${particle.opacity})`;
+                        }
+                        break;
+                }
+
+                ctx.fillText(
+                    particle.char,
+                    particle.baseX + particle.offsetX,
+                    particle.baseY + particle.offsetY
+                );
+                
+                ctx.shadowBlur = 0;
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        window.setAnimation = function(type) {
+            currentAnimation = type;
+            animationTime = 0;
+            
+            // Reset particle states
+            particles.forEach(p => {
+                p.hackState = 0;
+                p.isDecrypted = false;
+                p.char = p.originalChar;
+            });
+            
+            // Update button states
+            document.querySelectorAll('.controls button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        // Event listeners
+        canvas.addEventListener('mousemove', (e) => {
+            mousePosition.x = e.clientX;
+            mousePosition.y = e.clientY;
+            isHovering = true;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isHovering = false;
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            mousePosition.x = touch.clientX;
+            mousePosition.y = touch.clientY;
+            isHovering = true;
+        });
+
+        canvas.addEventListener('touchend', () => {
+            isHovering = false;
+        });
+
+        // Initialize
+        updateCanvasSize();
+        createParticles();
+        animate();
+
+        window.addEventListener('resize', () => {
+            updateCanvasSize();
+            createParticles();
+        });
+    </script>
+</body>
+</html>

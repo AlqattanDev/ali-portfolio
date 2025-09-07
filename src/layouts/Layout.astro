@@ -26,95 +26,910 @@
         </div>
     </div>
 
+    <!-- Load GSAP with proper error handling -->
     <script>
-      // Enhanced View Switcher Logic with Accessibility
-      const switcher = document.querySelector('.view-switcher') as HTMLButtonElement | null;
-      const body = document.body;
-      const currentModeSpan = document.getElementById('current-mode') as HTMLSpanElement | null;
+      // Load GSAP and ScrollTrigger dynamically
+      function loadGSAP() {
+        return new Promise((resolve, reject) => {
+          if (typeof gsap !== 'undefined' && gsap.plugins.ScrollTrigger) {
+            resolve(gsap);
+            return;
+          }
+          
+          const loadScript = (src) => {
+            return new Promise((resolve, reject) => {
+              const script = document.createElement('script');
+              script.src = src;
+              script.onload = resolve;
+              script.onerror = reject;
+              document.head.appendChild(script);
+            });
+          };
 
-      if (switcher) {
-        // Initialize ARIA state
-        let isDigitalMode = body.classList.contains('digital-view') || !body.classList.contains('print-view');
-        switcher.setAttribute('aria-checked', isDigitalMode ? 'false' : 'true');
+          // Load GSAP first, then ScrollTrigger
+          loadScript('https://unpkg.com/gsap@3.13.0/dist/gsap.min.js')
+            .then(() => loadScript('https://unpkg.com/gsap@3.13.0/dist/ScrollTrigger.min.js'))
+            .then(() => {
+              if (typeof gsap !== 'undefined') {
+                gsap.registerPlugin(ScrollTrigger);
+                resolve(gsap);
+              } else {
+                reject(new Error('GSAP failed to load'));
+              }
+            })
+            .catch(reject);
+        });
+      }
+
+      // Initialize comprehensive scroll animations
+      function initScrollAnimations() {
+        console.log('🎬 GSAP scroll animations initialized');
         
-        if (currentModeSpan) {
-          currentModeSpan.textContent = isDigitalMode ? 'digital' : 'print';
+        // Set up performance defaults
+        gsap.defaults({ 
+          ease: "power3.out", 
+          duration: 0.8
+        });
+
+        // Respect reduced motion preferences
+        const shouldAnimate = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        
+        if (!shouldAnimate) {
+          console.log('🔇 Animations disabled due to user preference');
+          return;
         }
 
-        // Enhanced click handler
-        switcher.addEventListener('click', () => {
-          if (body.classList.contains('digital-view')) {
-            // Switch to print mode
-            body.classList.remove('digital-view');
-            body.classList.add('print-view');
-            switcher.setAttribute('aria-checked', 'true');
-            switcher.setAttribute('aria-label', 'Switch to digital mode (currently in print mode)');
-            if (currentModeSpan) currentModeSpan.textContent = 'print';
+        // 1. Header and ASCII Art Animation
+        const asciiName = document.querySelector('.ascii-name');
+        if (asciiName) {
+          gsap.fromTo(asciiName, 
+            {
+              opacity: 0,
+              y: -30,
+              scale: 0.95
+            },
+            {
+              opacity: 1,
+              y: 0,
+              scale: 1,
+              duration: 1.2,
+              ease: "back.out(1.7)",
+              delay: 0.3
+            }
+          );
+        }
+
+        // 2. System Info Animation (staggered)
+        const systemInfoSpans = document.querySelectorAll('.system-info span');
+        if (systemInfoSpans.length > 0) {
+          gsap.fromTo(systemInfoSpans, 
+            {
+              opacity: 0,
+              x: -20
+            },
+            {
+              opacity: 1,
+              x: 0,
+              duration: 0.6,
+              stagger: 0.1,
+              delay: 0.8,
+              ease: "power2.out"
+            }
+          );
+        }
+
+        // 3. Contact Section Animation
+        const contactSection = document.querySelector('[data-component="contact-info"]');
+        if (contactSection) {
+          ScrollTrigger.create({
+            trigger: contactSection,
+            start: "top 80%",
+            end: "bottom 20%",
+            onEnter: () => {
+              const contactParagraphs = contactSection.querySelectorAll('p');
+              if (contactParagraphs.length > 0) {
+                gsap.fromTo(contactParagraphs, 
+                  {
+                    opacity: 0,
+                    y: 20,
+                    x: -10
+                  },
+                  {
+                    opacity: 1,
+                    y: 0,
+                    x: 0,
+                    duration: 0.6,
+                    stagger: 0.1,
+                    ease: "power3.out"
+                  }
+                );
+              }
+            },
+            once: true
+          });
+        }
+
+        // 4. Projects Section - Cards Animation
+        const projectsSection = document.querySelector('[data-component="projects"]');
+        if (projectsSection) {
+          ScrollTrigger.create({
+            trigger: projectsSection,
+            start: "top 85%",
+            end: "bottom 20%",
+            onEnter: () => {
+              const projectCards = document.querySelectorAll('[data-component="projects"] .entry');
+              if (projectCards.length > 0) {
+                gsap.fromTo(projectCards, 
+                  {
+                    opacity: 0,
+                    y: 60,
+                    scale: 0.9
+                  },
+                  {
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    duration: 0.8,
+                    stagger: 0.15,
+                    ease: "back.out(1.7)"
+                  }
+                );
+              }
+            },
+            once: true
+          });
+        }
+
+        // 5. Skills Section - Progressive Reveal
+        ScrollTrigger.create({
+          trigger: '[data-component="skills"]',
+          start: "top 80%",
+          end: "bottom 20%",
+          onEnter: () => {
+            // Skills categories fade in first
+            gsap.fromTo('.skills-grid > div', 
+              {
+                opacity: 0,
+                y: 40,
+                scale: 0.95
+              },
+              {
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                duration: 0.7,
+                stagger: 0.2,
+                ease: "power3.out"
+              }
+            );
+
+            // Skill items animate after categories
+            gsap.fromTo('.skill-item', 
+              {
+                opacity: 0,
+                x: -20,
+                scale: 0.9
+              },
+              {
+                opacity: 1,
+                x: 0,
+                scale: 1,
+                duration: 0.5,
+                stagger: 0.08,
+                delay: 0.3,
+                ease: "power2.out"
+              }
+            );
+
+            // Skill bars/progress animation (if they exist)
+            const skillBars = document.querySelectorAll('.skill-progress');
+            skillBars.forEach((bar, index) => {
+              gsap.fromTo(bar, 
+                { width: '0%' },
+                { 
+                  width: bar.dataset.skill || '80%', 
+                  duration: 1.2, 
+                  delay: 0.5 + index * 0.1,
+                  ease: "power3.out"
+                }
+              );
+            });
+          },
+          once: true
+        });
+
+        // 6. Education Section Animation
+        ScrollTrigger.create({
+          trigger: '[data-component="education"]',
+          start: "top 85%",
+          end: "bottom 20%",
+          onEnter: () => {
+            gsap.fromTo('[data-component="education"] > *', 
+              {
+                opacity: 0,
+                y: 30,
+                x: 20
+              },
+              {
+                opacity: 1,
+                y: 0,
+                x: 0,
+                duration: 0.7,
+                stagger: 0.15,
+                ease: "power3.out"
+              }
+            );
+          },
+          once: true
+        });
+
+        // 7. Footer/Checksum Animation
+        ScrollTrigger.create({
+          trigger: '.checksum',
+          start: "top 90%",
+          onEnter: () => {
+            gsap.fromTo('.checksum', 
+              {
+                opacity: 0,
+                y: 20,
+                scale: 0.95
+              },
+              {
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                duration: 0.6,
+                ease: "power2.out"
+              }
+            );
+          },
+          once: true
+        });
+
+        // 8. Section Titles Animation
+        ScrollTrigger.batch('.section-title', {
+          onEnter: elements => {
+            gsap.fromTo(elements, 
+              {
+                opacity: 0,
+                y: -20,
+                scale: 0.98
+              },
+              {
+                opacity: 1,
+                y: 0,
+                scale: 1,
+                duration: 0.8,
+                stagger: 0.1,
+                ease: "back.out(1.7)"
+              }
+            );
+          },
+          start: "top 85%",
+          once: true
+        });
+
+        // 9. Parallax effect for background elements (subtle)
+        if (window.innerWidth > 768) { // Only on desktop
+          gsap.to('.watermark', {
+            yPercent: -30,
+            ease: "none",
+            scrollTrigger: {
+              trigger: "body",
+              start: "top top",
+              end: "bottom top",
+              scrub: 1
+            }
+          });
+        }
+
+        // 10. Smooth scroll to sections (optional enhancement)
+        document.querySelectorAll('a[href^="#"]').forEach(link => {
+          link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const target = document.querySelector(link.getAttribute('href'));
+            if (target) {
+              gsap.to(window, {
+                scrollTo: target,
+                duration: 1.2,
+                ease: "power3.inOut"
+              });
+            }
+          });
+        });
+
+        // Refresh ScrollTrigger on window resize
+        window.addEventListener('resize', () => {
+          ScrollTrigger.refresh();
+        });
+
+        // Initialize new ScrollAnimationController for contract compliance
+        setTimeout(async () => {
+          try {
+            console.log('🎯 Initializing ScrollAnimationController...');
+            
+            // Create and initialize the ScrollAnimationController
+            const controller = new ScrollAnimationController();
+            const initialized = await controller.initialize({
+              respectsReducedMotion: true,
+              performanceMode: 'high',
+              debugMode: false
+            });
+
+            if (!initialized) {
+              console.warn('⚠️ Failed to initialize ScrollAnimationController');
+              return;
+            }
+
+            // Set up contract-compliant animations for all sections
+            const sections = ['contact-info', 'projects', 'skills', 'education'];
+            let foundSections = 0;
+
+            for (const sectionId of sections) {
+              const element = document.querySelector(`[data-component="${sectionId}"]`);
+              if (element) {
+                await controller.animateSection(sectionId);
+                foundSections++;
+                console.log(`✅ ${sectionId} animation configured`);
+              } else {
+                console.warn(`⚠️ Section not found: ${sectionId}`);
+              }
+            }
+
+            // Store controller globally for debugging and tests
+            window.portfolioAnimations = controller;
+            
+            console.log(`🎯 Found ${foundSections} sections for animation`);
+            console.log('✅ GSAP loaded successfully');
+            console.log('✅ ScrollTrigger registered');
+            console.log('✅ Animation system initialized');
+            console.log('📊 Performance mode: high');
+            
+          } catch (error) {
+            console.error('❌ Failed to initialize ScrollAnimationController:', error);
+          }
+        }, 500); // Small delay to ensure all elements are available
+      }
+
+      // ScrollAnimationController Class (T016)
+      class ScrollAnimationController {
+        constructor() {
+          this.isInitialized = false;
+          this.performanceMonitor = null;
+          this.accessibilityManager = null;
+          this.animationTargets = new Map();
+          this.activeAnimations = new Set();
+          this.config = {
+            respectsReducedMotion: true,
+            performanceMode: 'high',
+            debugMode: false
+          };
+        }
+
+        async initialize(config = {}) {
+          try {
+            this.config = { ...this.config, ...config };
+            
+            // Wait for GSAP to be available
+            if (typeof gsap === 'undefined') {
+              await loadGSAP();
+            }
+            
+            // Set up performance monitoring
+            if (window.PerformanceMonitor) {
+              this.performanceMonitor = new window.PerformanceMonitor();
+            }
+            
+            // Set up accessibility management
+            if (window.AccessibilityManager) {
+              this.accessibilityManager = new window.AccessibilityManager();
+            }
+            
+            this.isInitialized = true;
+            
+            if (this.config.debugMode) {
+              console.log('📱 ScrollAnimationController initialized');
+            }
+            
+            return true;
+          } catch (error) {
+            console.error('Failed to initialize ScrollAnimationController:', error);
+            return false;
+          }
+        }
+
+        async animateSection(sectionId) {
+          if (!this.isInitialized) {
+            throw new AnimationError('Controller not initialized', 'NOT_INITIALIZED');
+          }
+
+          const validSections = ['contact-info', 'projects', 'skills', 'education'];
+          if (!validSections.includes(sectionId)) {
+            throw new AnimationError(`Invalid section ID: ${sectionId}`, 'INVALID_SECTION');
+          }
+
+          // Emit animation start event
+          const startEvent = new CustomEvent('animationStart', {
+            detail: {
+              sectionId,
+              targetCount: this.getTargetCount(sectionId),
+              timestamp: performance.now()
+            }
+          });
+          window.dispatchEvent(startEvent);
+
+          // Perform the animation based on section
+          try {
+            await this.executeAnimation(sectionId);
+            
+            // Emit animation complete event
+            const completeEvent = new CustomEvent('animationComplete', {
+              detail: {
+                sectionId,
+                duration: performance.now() - startEvent.detail.timestamp,
+                performance: this.getPerformanceMetrics()
+              }
+            });
+            window.dispatchEvent(completeEvent);
+            
+          } catch (error) {
+            throw new AnimationError(`Animation failed for ${sectionId}`, 'ANIMATION_FAILED', { sectionId, error: error.message });
+          }
+        }
+
+        getTargetCount(sectionId) {
+          const selectors = {
+            'contact-info': '[data-component="contact-info"] p',
+            'projects': '[data-component="projects"] .entry',
+            'skills': '[data-component="skills"] .skills-grid > div',
+            'education': '[data-component="education"] .entry'
+          };
+          
+          const elements = document.querySelectorAll(selectors[sectionId] || '');
+          return elements.length;
+        }
+
+        async executeAnimation(sectionId) {
+          const element = document.querySelector(`[data-component="${sectionId}"]`);
+          if (!element) {
+            throw new Error(`Section element not found: ${sectionId}`);
+          }
+
+          // Create ScrollTrigger animation based on section type and contract specifications
+          let animation;
+          let scrollTriggerConfig;
+
+          switch (sectionId) {
+            case 'contact-info':
+              scrollTriggerConfig = {
+                trigger: element,
+                start: 'top 80%', // Contract: trigger at top 80% threshold
+                end: 'bottom 60%',
+                toggleActions: 'play none none reverse'
+              };
+              animation = gsap.fromTo(element.children, 
+                { opacity: 0, y: 30 },
+                { 
+                  opacity: 1, 
+                  y: 0, 
+                  duration: 0.6, // Contract: 0.6 duration
+                  ease: 'power3.out', // Contract: power3.out easing
+                  scrollTrigger: scrollTriggerConfig
+                }
+              );
+              break;
+
+            case 'projects':
+              scrollTriggerConfig = {
+                trigger: element,
+                start: 'top 75%', // Contract: trigger at top 75% threshold
+                end: 'bottom 50%',
+                toggleActions: 'play none none reverse'
+              };
+              const projectCards = element.querySelectorAll('.entry');
+              animation = gsap.fromTo(projectCards,
+                { opacity: 0, y: 50 },
+                { 
+                  opacity: 1, 
+                  y: 0, 
+                  duration: 0.8, // Contract: 0.8 duration
+                  ease: 'back.out(1.7)', // Contract: back.out(1.7) easing
+                  stagger: 0.1, // Contract: 0.1 stagger delay
+                  scrollTrigger: scrollTriggerConfig
+                }
+              );
+              break;
+
+            case 'skills':
+              scrollTriggerConfig = {
+                trigger: element,
+                start: 'top 70%', // Contract: trigger at top 70% threshold
+                end: 'bottom 50%',
+                toggleActions: 'play none none reverse'
+              };
+              const skillCategories = element.querySelectorAll('.skills-grid > div');
+              animation = gsap.fromTo(skillCategories,
+                { opacity: 0, y: 40 },
+                { 
+                  opacity: 1, 
+                  y: 0, 
+                  duration: 0.7, // Contract: 0.7 duration
+                  ease: 'power2.out', // Contract: power2.out easing
+                  stagger: 0.15, // Contract: 0.15 stagger delay
+                  scrollTrigger: scrollTriggerConfig
+                }
+              );
+              break;
+
+            case 'education':
+              scrollTriggerConfig = {
+                trigger: element,
+                start: 'top 75%', // Contract: trigger at top 75% threshold
+                end: 'bottom 50%',
+                toggleActions: 'play none none reverse'
+              };
+              const educationEntries = element.querySelectorAll('.entry');
+              animation = gsap.fromTo(educationEntries,
+                { opacity: 0, scale: 0.95 },
+                { 
+                  opacity: 1, 
+                  scale: 1, 
+                  duration: 0.6, // Contract: 0.6 duration
+                  ease: 'power3.out', // Contract: power3.out easing
+                  stagger: 0.2, // Contract: 0.2 stagger delay
+                  scrollTrigger: scrollTriggerConfig
+                }
+              );
+              break;
+          }
+
+          // Store animation reference for cleanup
+          this.activeAnimations.add(animation);
+          this.animationTargets.set(sectionId, { element, animation, config: scrollTriggerConfig });
+
+          // Return promise that resolves when animation setup is complete
+          return new Promise((resolve) => {
+            // Small delay to ensure ScrollTrigger is fully initialized
+            setTimeout(() => {
+              resolve();
+            }, 50);
+          });
+        }
+
+        getPerformanceMetrics() {
+          return {
+            averageFrameRate: this.performanceMonitor?.getAverageFrameRate() || 60,
+            droppedFrames: this.performanceMonitor?.droppedFrames || 0,
+            totalAnimations: this.performanceMonitor?.totalAnimations || 0,
+            completedAnimations: this.performanceMonitor?.completedAnimations || 0,
+            loadTime: this.performanceMonitor?.loadTime || 0
+          };
+        }
+
+        destroy() {
+          // Clean up ScrollTriggers
+          if (window.ScrollTrigger) {
+            ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+          }
+          
+          // Stop performance monitoring
+          if (this.performanceMonitor) {
+            this.performanceMonitor.stopMonitoring();
+          }
+          
+          // Clear active animations
+          this.activeAnimations.clear();
+          this.animationTargets.clear();
+          
+          this.isInitialized = false;
+          
+          if (this.config.debugMode) {
+            console.log('🧹 ScrollAnimationController destroyed');
+          }
+        }
+      }
+
+      // AnimationError Class (T016)
+      class AnimationError extends Error {
+        constructor(message, code, context = null) {
+          super(message);
+          this.name = 'AnimationError';
+          this.code = code;
+          this.context = context;
+        }
+      }
+
+      // Make classes globally available for tests
+      window.ScrollAnimationController = ScrollAnimationController;
+      window.AnimationError = AnimationError;
+      
+      // Expose animation configuration for contract tests
+      window.ANIMATION_CONFIG = {
+        durations: {
+          contact: 0.6,
+          projects: 0.8, 
+          skills: 0.7,
+          education: 0.6
+        },
+        easings: {
+          contact: 'power3.out',
+          projects: 'back.out(1.7)',
+          skills: 'power2.out',
+          education: 'power3.out'
+        },
+        thresholds: {
+          contact: 'top 80%',
+          projects: 'top 75%',
+          skills: 'top 70%',
+          education: 'top 75%'
+        }
+      };
+
+      // Enhanced Mode Switcher with GSAP Animations
+      document.addEventListener('DOMContentLoaded', async () => {
+        try {
+          // Wait for GSAP to load
+          const gsap = await loadGSAP();
+          
+          const switcher = document.querySelector('.mode-switcher');
+          const switcherTrack = document.querySelector('.switcher-track');
+          const switcherThumb = document.querySelector('.switcher-thumb');
+          const iconDigital = document.querySelector('.icon-digital');
+          const iconPrint = document.querySelector('.icon-print');
+          const sunCore = document.querySelector('.sun-core');
+          const sunRays = document.querySelector('.sun-rays');
+          const qrPattern = document.querySelector('.qr-pattern');
+          const body = document.body;
+          const currentModeSpan = document.getElementById('current-mode');
+
+          if (!switcher || !switcherTrack || !switcherThumb) return;
+
+          // Initialize state
+          let isDigitalMode = body.classList.contains('digital-view') || !body.classList.contains('print-view');
+          
+          // Set initial ARIA attributes
+          switcher.setAttribute('aria-checked', isDigitalMode ? 'false' : 'true');
+          if (currentModeSpan) {
+            currentModeSpan.textContent = isDigitalMode ? 'digital' : 'print';
+          }
+
+          // Set initial visual state without animation
+          gsap.set(switcherThumb, { x: isDigitalMode ? 0 : 30 });
+          gsap.set(iconDigital, { opacity: isDigitalMode ? 1 : 0, scale: isDigitalMode ? 1 : 0.5 });
+          gsap.set(iconPrint, { opacity: isDigitalMode ? 0 : 1, scale: isDigitalMode ? 0.5 : 1 });
+
+          // Hover animations
+          switcher.addEventListener('mouseenter', () => {
+            gsap.to(switcher, { scale: 1.05, duration: 0.2, ease: "power2.out" });
+            gsap.to(switcherTrack, { boxShadow: "0 0 20px rgba(0, 255, 65, 0.5)", duration: 0.2 });
+          });
+
+          switcher.addEventListener('mouseleave', () => {
+            gsap.to(switcher, { scale: 1, duration: 0.2, ease: "power2.out" });
+            gsap.to(switcherTrack, { boxShadow: "0 0 0px rgba(0, 255, 65, 0)", duration: 0.2 });
+          });
+
+        // Animation function for mode switching
+        function animateSwitch(toDigital) {
+          // Disable pointer events during animation
+          switcher.style.pointerEvents = 'none';
+          
+          // Create animation timeline
+          const tl = gsap.timeline({ 
+            onComplete: () => {
+              switcher.style.pointerEvents = 'auto';
+            }
+          });
+
+          // Button press effect
+          tl.to(switcher, { scale: 0.95, duration: 0.1, ease: "power2.inOut" })
+            .to(switcher, { scale: 1.02, duration: 0.15, ease: "back.out(1.7)" });
+
+          // Thumb slide animation
+          tl.to(switcherThumb, { 
+            x: toDigital ? 0 : 30, 
+            duration: 0.4, 
+            ease: "power3.inOut" 
+          }, "-=0.2");
+
+          if (toDigital) {
+            // Digital mode animations
+            tl.to(iconPrint, { 
+              opacity: 0, 
+              scale: 0.3, 
+              rotation: -90, 
+              duration: 0.2,
+              ease: "power2.inOut" 
+            }, "-=0.3")
+            .to(iconDigital, { 
+              opacity: 1, 
+              scale: 1, 
+              rotation: 0, 
+              duration: 0.3,
+              ease: "back.out(1.7)" 
+            }, "-=0.1");
+
+            // Sun rays rotation
+            if (sunRays) {
+              tl.to(sunRays, { 
+                rotation: 360, 
+                duration: 0.8, 
+                ease: "power2.inOut" 
+              }, "-=0.4");
+            }
+
+            // Sun core pulsing
+            if (sunCore) {
+              tl.to(sunCore, { 
+                scale: 1.2, 
+                duration: 0.2, 
+                ease: "power2.inOut" 
+              }, "-=0.3")
+              .to(sunCore, { 
+                scale: 1, 
+                duration: 0.2, 
+                ease: "power2.inOut" 
+              });
+            }
           } else {
-            // Switch to digital mode
+            // Print mode animations
+            tl.to(iconDigital, { 
+              opacity: 0, 
+              scale: 0.3, 
+              rotation: 90, 
+              duration: 0.2,
+              ease: "power2.inOut" 
+            }, "-=0.3")
+            .to(iconPrint, { 
+              opacity: 1, 
+              scale: 1, 
+              rotation: 0, 
+              duration: 0.3,
+              ease: "back.out(1.7)" 
+            }, "-=0.1");
+
+            // QR pattern animation
+            if (qrPattern) {
+              tl.fromTo(qrPattern, 
+                { opacity: 0, scale: 0.5 }, 
+                { opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.7)" }, 
+                "-=0.2"
+              );
+            }
+          }
+
+          // Background color transition
+          tl.to(body, { 
+            backgroundColor: toDigital ? "#0a0a0a" : "#ffffff",
+            duration: 0.6,
+            ease: "power2.inOut"
+          }, "-=0.8");
+
+          return tl;
+        }
+
+        // Click handler with animations
+        switcher.addEventListener('click', () => {
+          const wasDigital = body.classList.contains('digital-view');
+          const toDigital = !wasDigital;
+          
+          // Update classes
+          if (toDigital) {
             body.classList.remove('print-view');
             body.classList.add('digital-view');
             switcher.setAttribute('aria-checked', 'false');
             switcher.setAttribute('aria-label', 'Switch to print preview mode (currently in digital mode)');
             if (currentModeSpan) currentModeSpan.textContent = 'digital';
+          } else {
+            body.classList.remove('digital-view');
+            body.classList.add('print-view');
+            switcher.setAttribute('aria-checked', 'true');
+            switcher.setAttribute('aria-label', 'Switch to digital mode (currently in print mode)');
+            if (currentModeSpan) currentModeSpan.textContent = 'print';
           }
+
+          // Animate the switch
+          animateSwitch(toDigital);
         });
 
-        // Keyboard support (Enter and Space)
-        switcher.addEventListener('keydown', (event: KeyboardEvent) => {
+        // Keyboard support
+        switcher.addEventListener('keydown', (event) => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             switcher.click();
           }
         });
 
-        // Add ripple effect for better visual feedback
-        switcher.addEventListener('click', (event: MouseEvent) => {
-          const ripple = document.createElement('span');
-          const rect = switcher.getBoundingClientRect();
-          const size = Math.max(rect.width, rect.height);
-          const x = event.clientX - rect.left - size / 2;
-          const y = event.clientY - rect.top - size / 2;
-          
-          ripple.style.cssText = `
-            position: absolute;
-            width: ${size}px;
-            height: ${size}px;
-            left: ${x}px;
-            top: ${y}px;
-            background: rgba(0, 255, 65, 0.3);
-            border-radius: 50%;
-            transform: scale(0);
-            animation: ripple 0.6s linear;
-            pointer-events: none;
-          `;
-          
-          switcher.appendChild(ripple);
-          
-          setTimeout(() => {
-            if (ripple.parentNode) {
-              ripple.parentNode.removeChild(ripple);
-            }
-          }, 600);
-        });
-      }
+          // Focus animations
+          switcher.addEventListener('focus', () => {
+            gsap.to(switcherTrack, { 
+              boxShadow: "0 0 0 2px rgba(0, 255, 65, 0.6)", 
+              duration: 0.2 
+            });
+          });
 
-      // Add ripple animation styles
-      const rippleStyles = document.createElement('style');
-      rippleStyles.textContent = `
-        @keyframes ripple {
-          to {
-            transform: scale(4);
-            opacity: 0;
+          switcher.addEventListener('blur', () => {
+            gsap.to(switcherTrack, { 
+              boxShadow: "0 0 0 0px rgba(0, 255, 65, 0)", 
+              duration: 0.2 
+            });
+          });
+
+          // Initialize scroll animations - DISABLED to prevent conflicts with ScrollAnimationController
+          // initScrollAnimations();
+          
+          // Initialize ScrollAnimationController directly
+          setTimeout(async () => {
+            try {
+              console.log('🎯 Initializing ScrollAnimationController...');
+              
+              const controller = new ScrollAnimationController();
+              const initialized = await controller.initialize({
+                respectsReducedMotion: true,
+                performanceMode: 'high',
+                debugMode: false
+              });
+
+              if (!initialized) {
+                console.warn('⚠️ Failed to initialize ScrollAnimationController');
+                return;
+              }
+
+              const sections = ['contact-info', 'projects', 'skills', 'education'];
+              let foundSections = 0;
+
+              for (const sectionId of sections) {
+                const element = document.querySelector(`[data-component="${sectionId}"]`);
+                if (element) {
+                  await controller.animateSection(sectionId);
+                  foundSections++;
+                  console.log(`✅ ${sectionId} animation configured`);
+                } else {
+                  console.warn(`⚠️ Section not found: ${sectionId}`);
+                }
+              }
+
+              window.portfolioAnimations = controller;
+              
+              console.log(`🎯 Found ${foundSections} sections for animation`);
+              console.log('✅ GSAP loaded successfully');
+              console.log('✅ ScrollTrigger registered');
+              console.log('✅ Animation system initialized');
+              console.log('📊 Performance mode: high');
+              
+            } catch (error) {
+              console.error('❌ Failed to initialize ScrollAnimationController:', error);
+            }
+          }, 500);
+        
+        } catch (error) {
+          console.error('Failed to initialize GSAP mode switcher:', error);
+          
+          // Fallback without animations
+          const switcher = document.querySelector('.mode-switcher');
+          const body = document.body;
+          const currentModeSpan = document.getElementById('current-mode');
+          
+          if (switcher) {
+            switcher.addEventListener('click', () => {
+              const wasDigital = body.classList.contains('digital-view');
+              const toDigital = !wasDigital;
+              
+              if (toDigital) {
+                body.classList.remove('print-view');
+                body.classList.add('digital-view');
+                switcher.setAttribute('aria-checked', 'false');
+                if (currentModeSpan) currentModeSpan.textContent = 'digital';
+              } else {
+                body.classList.remove('digital-view');
+                body.classList.add('print-view');
+                switcher.setAttribute('aria-checked', 'true');
+                if (currentModeSpan) currentModeSpan.textContent = 'print';
+              }
+            });
           }
         }
-        
-        .view-switcher {
-          position: relative;
-          overflow: hidden;
-        }
-      `;
-      document.head.appendChild(rippleStyles);
+      });
     </script>
 
 
@@ -265,9 +1080,15 @@
         -moz-osx-font-smoothing: grayscale;
       }
 
+      /* Explicit theme styling to ensure proper application */
+      body.digital-view {
+        background: var(--bg-primary) !important;
+        color: var(--text-primary) !important;
+      }
+
       body.print-view {
-        background: var(--background-print);
-        color: var(--foreground-print);
+        background: var(--background-print) !important;
+        color: var(--foreground-print) !important;
       }
 
       /* Typography Hierarchy */
@@ -493,9 +1314,9 @@
         }
       }
 
-      /* Dark mode preference support */
+      /* Dark mode preference support - but don't override explicit theme classes */
       @media (prefers-color-scheme: light) {
-        body:not(.print-view) {
+        body:not(.print-view):not(.digital-view) {
           --bg-primary: #fafafa;
           --bg-secondary: #f0f0f0;
           --text-primary: #1a1a1a;
@@ -586,109 +1407,155 @@
         position: relative;
       }
 
-      /* Enhanced Mode Switcher with Animations (T023-T024) */
-      .view-switcher {
-        position: absolute;
-        top: var(--space-4);
-        right: var(--space-4);
+      /* Name row container to position ASCII art and mode switcher */
+      .name-row {
+        display: flex;
+        align-items: center;
+        gap: var(--space-8);
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
+
+      /* Enhanced Mode Switcher with GSAP Animations */
+      .mode-switcher {
         background: transparent;
-        border: 2px solid var(--accent-primary);
+        border: none;
         color: var(--text-primary);
         padding: var(--space-2);
         cursor: pointer;
         font-family: var(--font-mono);
         font-size: var(--text-xs);
-        width: 48px;
-        height: 48px;
-        min-width: 48px;
-        min-height: 48px;
+        width: 60px;
+        height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: var(--space-1);
-        overflow: hidden;
+        border-radius: 16px;
+        overflow: visible;
         z-index: 100;
-        transition: all var(--duration-normal) var(--ease-out-cubic);
-      }
-
-      /* Mode switcher states */
-      .view-switcher:hover {
-        background: var(--bg-secondary);
-        border-color: var(--accent-primary);
-        transform: translateY(-2px);
-        box-shadow: var(--glow-sm);
-      }
-
-      .view-switcher:focus-visible {
+        flex-shrink: 0;
         outline: none;
-        box-shadow: var(--focus-ring);
-        outline-offset: var(--focus-ring-offset);
+        position: relative;
       }
 
-      .view-switcher:active {
-        transform: translateY(0);
-        transition: all var(--duration-fast) var(--ease-out-cubic);
+      /* Switcher Track */
+      .switcher-track {
+        width: 100%;
+        height: 100%;
+        border-radius: 16px;
+        background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+        border: 2px solid var(--accent-primary);
+        position: relative;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
-      /* Print mode overrides */
-      body.print-view .view-switcher {
-        border-color: var(--border-primary);
-        color: var(--text-primary);
-        width: 48px;
-        height: 48px;
-        min-width: 48px;
-        min-height: 48px;
-        padding: var(--space-3);
+      /* Switcher Thumb */
+      .switcher-thumb {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+        position: absolute;
+        top: 50%;
+        left: 2px;
+        transform: translateY(-50%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
-      body.print-view .view-switcher:hover {
-        background: var(--bg-secondary);
-        color: var(--text-primary);
-        transform: none; /* No hover animations in print mode */
-        box-shadow: none;
+      /* Icon Styles */
+      .mode-switcher svg {
+        width: 16px;
+        height: 16px;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
       }
 
-      /* Icon transitions */
-      .view-switcher svg {
-        transition: all var(--duration-normal) var(--ease-out-cubic);
-        width: 20px;
-        height: 20px;
-      }
-
-      body.print-view .view-switcher svg {
-        width: 24px;
-        height: 24px;
-      }
-
-      /* Hover animations for icons */
-      .view-switcher:hover .icon-digital {
-        transform: rotate(90deg) scale(1.1);
-      }
-
-      .view-switcher:hover .icon-print {
-        transform: scale(1.1);
-      }
-
-      body.print-view .view-switcher:hover .icon-digital,
-      body.print-view .view-switcher:hover .icon-print {
-        transform: none; /* No animations in print mode */
-      }
-      
       .icon-digital {
-        display: block;
+        color: var(--bg-primary);
       }
       
       .icon-print {
-        display: none;
+        color: var(--bg-primary);
       }
-      
-      body.print-view .icon-digital {
-        display: none;
+
+      /* Print Mode Overrides */
+      body.print-view .switcher-track {
+        background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+        border-color: var(--border-primary);
       }
-      
+
+      body.print-view .switcher-thumb {
+        background: linear-gradient(135deg, var(--text-primary) 0%, #333333 100%);
+      }
+
+      body.print-view .icon-digital,
       body.print-view .icon-print {
-        display: block;
+        color: var(--bg-primary);
       }
+
+      /* Animation Performance Optimizations */
+      .ascii-name,
+      .system-info span,
+      [data-component="projects"] .entry,
+      .skills-grid > div,
+      .skill-item,
+      .section-title,
+      .checksum {
+        will-change: transform, opacity;
+        backface-visibility: hidden;
+        transform: translateZ(0); /* Force GPU layer */
+      }
+
+      /* Reduced Motion Support */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
+        }
+      }
+
+      /* Animation-ready elements */
+      [data-component="projects"] .entry {
+        transform-style: preserve-3d;
+      }
+
+      .skill-progress {
+        overflow: hidden;
+        background: var(--border-primary);
+        height: 4px;
+        border-radius: 2px;
+        position: relative;
+      }
+
+      .skill-progress::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+        width: 0%;
+        transition: width 0.3s ease;
+        border-radius: 2px;
+      }
+
+      /* Parallax container */
+      .watermark {
+        transform: translateZ(0);
+      }
+
+      /* Remove old view-switcher styles - replaced with new mode-switcher */
 
       .ascii-name {
         font-family: var(--font-body);
