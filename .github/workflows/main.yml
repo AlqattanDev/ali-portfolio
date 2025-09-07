@@ -260,9 +260,9 @@ jobs:
       - name: Install Playwright
         run: npx playwright install --with-deps
       - name: Start dev server for visual tests
-        run: npm run dev &
+        run: npm run dev > server_visual.log 2>&1 &
       - name: Wait for dev server
-        run: npx wait-on http://localhost:4321 --timeout 120000
+        run: npx wait-on http://localhost:4321 --timeout 120000 || (cat server_visual.log && exit 1)
       - name: Run visual regression tests
         run: npm run test:visual
       - name: Upload visual test results
