@@ -1,8 +1,11 @@
 #!/bin/bash
 set -e
 
-axe http://localhost:3000 --save accessibility-results.json
-axe http://localhost:3000 --reporter=json > accessibility-report.json
+# Use the correct port and path for the Ali Portfolio
+BASE_URL="http://localhost:4321/ali-portfolio"
 
-pa11y http://localhost:3000 --reporter json > pa11y-report.json
-pa11y http://localhost:3000 --standard WCAG2AA --reporter cli
+axe "$BASE_URL" --save accessibility-results.json
+axe "$BASE_URL" --reporter=json > accessibility-report.json
+
+pa11y "$BASE_URL" --reporter json > pa11y-report.json
+pa11y "$BASE_URL" --standard WCAG2AA --reporter cli

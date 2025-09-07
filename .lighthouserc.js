@@ -1,10 +1,7 @@
 module.exports = {
   ci: {
     collect: {
-      url: ['http://localhost:4321/ali-portfolio'],
-      startServerCommand: 'npm run preview',
-      startServerReadyPattern: 'Local:',
-      startServerReadyTimeout: 20000,
+      url: ['http://localhost:3000/'],
       numberOfRuns: 3,
       settings: {
         preset: 'desktop',
