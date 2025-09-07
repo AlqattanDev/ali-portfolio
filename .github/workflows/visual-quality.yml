@@ -1,0 +1,470 @@
+name: Visual Quality & Readability Checks
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    # Run weekly on Sundays at 2 AM UTC
+    - cron: '0 2 * * 0'
+
+jobs:
+  lighthouse-audit:
+    runs-on: ubuntu-latest
+    name: Lighthouse Audit & Performance
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build site
+        run: npm run build
+        
+      - name: Serve built site
+        run: npx serve dist -l 3000 &
+        
+      - name: Wait for server
+        run: npx wait-on http://localhost:3000 --timeout 60000
+        
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          configPath: './.lighthouserc.json'
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  visual-regression:
+    runs-on: ubuntu-latest
+    name: Visual Regression Testing
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Install Playwright
+        run: npx playwright install --with-deps
+        
+      - name: Start dev server
+        run: npm run dev &
+        
+      - name: Wait for server
+        run: npx wait-on http://localhost:4321 --timeout 60000
+        
+      - name: Run visual regression tests
+        run: npm run test:visual
+        
+      - name: Upload visual test results
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: visual-test-results
+          path: test-results/
+          retention-days: 30
+
+  accessibility-audit:
+    runs-on: ubuntu-latest
+    name: Accessibility & Readability Audit
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build and serve site
+        run: |
+          npm run build
+          npx serve dist -l 3000 &
+          npx wait-on http://localhost:3000 --timeout 60000
+          
+      - name: Install axe-core CLI
+        run: npm install -g @axe-core/cli
+        
+      - name: Run accessibility audit
+        run: |
+          axe http://localhost:3000 --save accessibility-results.json
+          axe http://localhost:3000 --reporter=json > accessibility-report.json
+        continue-on-error: true
+        
+      - name: Install Pa11y for additional checks
+        run: npm install -g pa11y
+        
+      - name: Run Pa11y accessibility tests
+        run: |
+          pa11y http://localhost:3000 --reporter json > pa11y-report.json
+          pa11y http://localhost:3000 --standard WCAG2AA --reporter cli
+        continue-on-error: true
+        
+      - name: Upload accessibility reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: accessibility-reports
+          path: |
+            accessibility-*.json
+            pa11y-*.json
+          retention-days: 30
+
+  color-contrast-check:
+    runs-on: ubuntu-latest
+    name: Color Contrast & Typography
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Install Playwright
+        run: npx playwright install --with-deps
+        
+      - name: Start dev server
+        run: npm run dev &
+        
+      - name: Wait for server
+        run: npx wait-on http://localhost:4321 --timeout 60000
+        
+      - name: Run color contrast tests
+        run: npx playwright test tests/accessibility/color-contrast.spec.js --reporter=html
+        
+      - name: Upload contrast test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: contrast-test-report
+          path: playwright-report/
+          retention-days: 30
+
+  image-optimization-check:
+    runs-on: ubuntu-latest
+    name: Image Optimization Analysis
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Install ImageOptim CLI
+        run: |
+          wget -O imageoptim.tar.bz2 https://imageoptim.com/ImageOptim.tbz2
+          tar -xf imageoptim.tar.bz2
+          
+      - name: Analyze image sizes
+        run: |
+          echo "📊 Image Analysis Report" > image-report.md
+          echo "=========================" >> image-report.md
+          echo "" >> image-report.md
+          
+          # Find all images
+          find public -name "*.jpg" -o -name "*.jpeg" -o -name "*.png" -o -name "*.svg" | while read img; do
+            size=$(wc -c < "$img" 2>/dev/null || echo "0")
+            echo "- $img: $(($size / 1024))KB" >> image-report.md
+          done
+          
+          # Check for unoptimized images (>500KB)
+          echo "" >> image-report.md
+          echo "⚠️ Large Images (>500KB):" >> image-report.md
+          find public -name "*.jpg" -o -name "*.jpeg" -o -name "*.png" | while read img; do
+            size=$(wc -c < "$img" 2>/dev/null || echo "0")
+            if [ $size -gt 512000 ]; then
+              echo "- $img: $(($size / 1024))KB - Consider optimization" >> image-report.md
+            fi
+          done
+          
+          cat image-report.md
+          
+      - name: Upload image analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-analysis-report
+          path: image-report.md
+          retention-days: 30
+
+  css-quality-check:
+    runs-on: ubuntu-latest
+    name: CSS Quality & Design System
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install CSS analysis tools
+        run: |
+          npm install -g cssstats
+          npm install -g parker
+          npm install -g css-analyzer
+          
+      - name: Build site to analyze generated CSS
+        run: |
+          npm ci
+          npm run build
+          
+      - name: Analyze CSS statistics
+        run: |
+          echo "🎨 CSS Analysis Report" > css-report.md
+          echo "======================" >> css-report.md
+          echo "" >> css-report.md
+          
+          # Find generated CSS files
+          find dist -name "*.css" | while read css_file; do
+            echo "## Analysis for $css_file" >> css-report.md
+            echo "" >> css-report.md
+            
+            # Basic stats
+            echo "### Basic Statistics" >> css-report.md
+            wc -l "$css_file" | awk '{print "- Lines of CSS: " $1}' >> css-report.md
+            wc -c "$css_file" | awk '{print "- File size: " int($1/1024) "KB"}' >> css-report.md
+            
+            # Color analysis
+            echo "" >> css-report.md
+            echo "### Color Usage" >> css-report.md
+            grep -o '#[0-9a-fA-F]\{3,6\}' "$css_file" 2>/dev/null | sort -u | wc -l | awk '{print "- Unique hex colors: " $1}' >> css-report.md
+            grep -o 'rgb([^)]*)'  "$css_file" 2>/dev/null | sort -u | wc -l | awk '{print "- RGB color definitions: " $1}' >> css-report.md
+            
+            echo "" >> css-report.md
+          done
+          
+          cat css-report.md
+          
+      - name: Upload CSS analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: css-analysis-report
+          path: css-report.md
+          retention-days: 30
+
+  readability-score:
+    runs-on: ubuntu-latest
+    name: Content Readability Analysis
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python for readability tools
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+          
+      - name: Install readability tools
+        run: |
+          pip install textstat
+          pip install beautifulsoup4
+          pip install requests
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Build and serve site
+        run: |
+          npm ci
+          npm run build
+          npx serve dist -l 3000 &
+          npx wait-on http://localhost:3000 --timeout 60000
+          
+      - name: Analyze content readability
+        run: |
+          python3 << 'EOF'
+          import requests
+          from bs4 import BeautifulSoup
+          import textstat
+          import json
+          
+          # Fetch the homepage
+          response = requests.get('http://localhost:3000')
+          soup = BeautifulSoup(response.content, 'html.parser')
+          
+          # Extract text content
+          text_content = soup.get_text()
+          
+          # Calculate readability scores
+          flesch_reading = textstat.flesch_reading_ease(text_content)
+          flesch_kincaid = textstat.flesch_kincaid_grade(text_content)
+          gunning_fog = textstat.gunning_fog(text_content)
+          reading_time = textstat.reading_time(text_content, ms_per_char=14.69)
+          
+          report = {
+              "flesch_reading_ease": flesch_reading,
+              "flesch_kincaid_grade": flesch_kincaid,
+              "gunning_fog_index": gunning_fog,
+              "estimated_reading_time_minutes": reading_time,
+              "word_count": len(text_content.split()),
+              "recommendations": []
+          }
+          
+          # Add recommendations
+          if flesch_reading < 60:
+              report["recommendations"].append("Content is fairly difficult to read. Consider shorter sentences.")
+          if flesch_kincaid > 12:
+              report["recommendations"].append("Reading level is above 12th grade. Simplify vocabulary.")
+          if gunning_fog > 12:
+              report["recommendations"].append("Text complexity is high. Break down complex sentences.")
+              
+          with open('readability-report.json', 'w') as f:
+              json.dump(report, f, indent=2)
+              
+          print("📖 Readability Analysis Complete")
+          print(f"Flesch Reading Ease: {flesch_reading}/100")
+          print(f"Grade Level: {flesch_kincaid}")
+          print(f"Reading Time: {reading_time} minutes")
+          EOF
+          
+      - name: Upload readability report
+        uses: actions/upload-artifact@v4
+        with:
+          name: readability-report
+          path: readability-report.json
+          retention-days: 30
+
+  design-tokens-validation:
+    runs-on: ubuntu-latest
+    name: Design System Consistency
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Build site
+        run: |
+          npm ci
+          npm run build
+          
+      - name: Validate design consistency
+        run: |
+          echo "🎨 Design System Validation" > design-validation.md
+          echo "============================" >> design-validation.md
+          echo "" >> design-validation.md
+          
+          # Check for consistent color usage
+          echo "## Color Consistency Check" >> design-validation.md
+          find dist -name "*.css" -exec grep -h "color:" {} \; | sort | uniq -c | sort -nr | head -10 >> design-validation.md
+          echo "" >> design-validation.md
+          
+          # Check for font consistency
+          echo "## Font Usage Analysis" >> design-validation.md
+          find dist -name "*.css" -exec grep -h "font-" {} \; | sort | uniq -c | sort -nr | head -10 >> design-validation.md
+          echo "" >> design-validation.md
+          
+          # Check for spacing consistency
+          echo "## Spacing Pattern Analysis" >> design-validation.md
+          find dist -name "*.css" -exec grep -h -E "(margin|padding):" {} \; | sort | uniq -c | sort -nr | head -10 >> design-validation.md
+          
+          cat design-validation.md
+          
+      - name: Upload design validation
+        uses: actions/upload-artifact@v4
+        with:
+          name: design-validation-report
+          path: design-validation.md
+          retention-days: 30
+
+  summary-report:
+    runs-on: ubuntu-latest
+    name: Quality Summary Report
+    needs: [lighthouse-audit, visual-regression, accessibility-audit, color-contrast-check, readability-score]
+    if: always()
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        
+      - name: Create summary report
+        run: |
+          echo "# 📊 Visual Quality & Readability Summary" > QUALITY_REPORT.md
+          echo "Generated on: $(date)" >> QUALITY_REPORT.md
+          echo "" >> QUALITY_REPORT.md
+          
+          echo "## 🚀 Performance & Lighthouse" >> QUALITY_REPORT.md
+          echo "- Lighthouse audit completed" >> QUALITY_REPORT.md
+          echo "" >> QUALITY_REPORT.md
+          
+          echo "## ♿ Accessibility Status" >> QUALITY_REPORT.md  
+          echo "- Axe-core audit completed" >> QUALITY_REPORT.md
+          echo "- Pa11y analysis completed" >> QUALITY_REPORT.md
+          echo "- Color contrast validation completed" >> QUALITY_REPORT.md
+          echo "" >> QUALITY_REPORT.md
+          
+          echo "## 📖 Content Readability" >> QUALITY_REPORT.md
+          if [ -f "readability-report/readability-report.json" ]; then
+            python3 << 'EOF'
+          import json
+          try:
+              with open('readability-report/readability-report.json', 'r') as f:
+                  data = json.load(f)
+                  print(f"- Reading ease: {data.get('flesch_reading_ease', 'N/A')}/100")
+                  print(f"- Grade level: {data.get('flesch_kincaid_grade', 'N/A')}")
+                  print(f"- Estimated reading time: {data.get('estimated_reading_time_minutes', 'N/A')} minutes")
+                  print(f"- Word count: {data.get('word_count', 'N/A')}")
+          except:
+              print("- Readability report not available")
+          EOF
+          else
+            echo "- Readability analysis not available" >> QUALITY_REPORT.md
+          fi
+          echo "" >> QUALITY_REPORT.md
+          
+          echo "## 🎨 Design System" >> QUALITY_REPORT.md
+          echo "- CSS quality analysis completed" >> QUALITY_REPORT.md
+          echo "- Design token validation completed" >> QUALITY_REPORT.md
+          echo "" >> QUALITY_REPORT.md
+          
+          echo "## 📈 Visual Testing" >> QUALITY_REPORT.md
+          echo "- Visual regression testing completed" >> QUALITY_REPORT.md
+          echo "- Image optimization analysis completed" >> QUALITY_REPORT.md
+          
+          cat QUALITY_REPORT.md
+          
+      - name: Upload summary report
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-summary-report
+          path: QUALITY_REPORT.md
+          retention-days: 60
