@@ -37,7 +37,7 @@ jobs:
         env:
           CI: true
       - name: Wait for server
-        run: npx wait-on http://localhost:4321 --timeout 60000
+        run: npx wait-on http://localhost:4321 --timeout 120000
       - name: Run Playwright tests
         run: npm run test
       - name: Upload test results
@@ -262,7 +262,7 @@ jobs:
       - name: Start dev server for visual tests
         run: npm run dev &
       - name: Wait for dev server
-        run: npx wait-on http://localhost:4321 --timeout 60000
+        run: npx wait-on http://localhost:4321 --timeout 120000
       - name: Run visual regression tests
         run: npm run test:visual
       - name: Upload visual test results
