@@ -13,12 +13,12 @@ test.describe('Accessibility Tests', () => {
     const main = page.locator('main');
     await expect(main).toBeVisible();
     
-    // Check for heading hierarchy
-    const h1 = page.locator('h1');
+    // Check for heading hierarchy - be more specific to avoid DevTools elements
+    const h1 = page.locator('h1').first();
     await expect(h1).toBeVisible();
     
     // Check mode switcher is keyboard accessible
-    const modeSwitcher = page.locator('.view-switcher');
+    const modeSwitcher = page.locator('.mode-switcher');
     await expect(modeSwitcher).toBeVisible();
     await modeSwitcher.focus();
     await expect(modeSwitcher).toBeFocused();
@@ -59,7 +59,7 @@ test.describe('Accessibility Tests', () => {
     await page.waitForLoadState('networkidle');
     
     // Test focus indicators are visible
-    const modeSwitcher = page.locator('.view-switcher');
+    const modeSwitcher = page.locator('.mode-switcher');
     await modeSwitcher.focus();
     
     // Take screenshot of focused element for manual review

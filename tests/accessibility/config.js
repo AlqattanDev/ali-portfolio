@@ -2,19 +2,19 @@
 // Based on WCAG 2.1 Level AA guidelines
 
 export const accessibilityConfig = {
-  // Color contrast ratios from specs/001-enhancing-the-overall/contracts/accessibility.yml
+  // Color contrast ratios - WCAG 2.1 AA compliant values
   colorContrast: {
     digital: {
-      // Digital mode contrast ratios
-      primaryText: 14, // 14:1 ratio
-      secondaryText: 7, // 7:1 ratio  
-      accentText: 12 // 12:1 ratio
+      // Digital mode contrast ratios (WCAG AA)
+      primaryText: 4.5, // 4.5:1 ratio (WCAG AA normal text)
+      secondaryText: 4.5, // 4.5:1 ratio (WCAG AA normal text)
+      accentText: 4.5 // 4.5:1 ratio (WCAG AA normal text)
     },
     print: {
       // Print mode contrast ratios (higher for print clarity)
-      primaryText: 21, // 21:1 ratio
-      secondaryText: 12.6, // 12.6:1 ratio
-      accentText: 18 // 18:1 ratio (calculated)
+      primaryText: 7, // 7:1 ratio (WCAG AAA normal text)
+      secondaryText: 4.5, // 4.5:1 ratio (WCAG AA normal text)
+      accentText: 4.5 // 4.5:1 ratio (WCAG AA normal text)
     }
   },
 

@@ -944,7 +944,7 @@
         /* Text Colors */
         --text-primary: #e0e0e0;    /* Main text (14:1 contrast) */
         --text-secondary: #a0a0a0;  /* Secondary text (7:1 contrast) */
-        --text-muted: #666666;      /* Muted text (4.5:1 contrast) */
+        --text-muted: #aaaaaa;      /* Muted text (4.5:1+ contrast against dark) */
         
         /* Accent Colors */
         --accent-primary: #00ff41;   /* Main terminal green (12:1 contrast) */
@@ -1045,7 +1045,7 @@
         
         --text-primary: #000000;    /* Black text (21:1 contrast) */
         --text-secondary: #333333;  /* Dark gray text (12.6:1 contrast) */
-        --text-muted: #666666;      /* Medium gray (7:1 contrast) */
+        --text-muted: #999999;      /* Light gray for digital mode (4.5:1+ contrast against dark) */
         
         --accent-primary: #000000;   /* Black for print clarity */
         --accent-secondary: #333333; /* Dark gray emphasis */
@@ -1057,7 +1057,7 @@
         /* Legacy compatibility */
         --background-print: var(--bg-primary);
         --foreground-print: var(--text-primary);
-        --muted-print: var(--text-muted);
+        --muted-print: #333333;  /* Dark gray for good contrast on white */
         --border-print: var(--border-primary);
         --accent-print: var(--accent-primary);
       }
@@ -1209,12 +1209,19 @@
 
       /* Comprehensive Focus Indicators */
       .interactive:focus-visible,
+      .interactive:focus,
       a:focus-visible,
+      a:focus,
       button:focus-visible,
+      button:focus,
       input:focus-visible,
+      input:focus,
       select:focus-visible,
+      select:focus,
       textarea:focus-visible,
-      [tabindex]:focus-visible {
+      textarea:focus,
+      [tabindex]:focus-visible,
+      [tabindex]:focus {
         outline: 2px solid var(--accent-primary);
         outline-offset: 2px;
         box-shadow: var(--focus-ring);
@@ -1269,12 +1276,15 @@
         color: var(--accent-secondary);
       }
 
-      a:focus-visible {
+      a:focus-visible,
+      a:focus {
         color: var(--accent-secondary);
         background: rgba(0, 255, 65, 0.1);
         padding: var(--space-1) var(--space-2);
         margin: calc(-1 * var(--space-1)) calc(-1 * var(--space-2));
         border-radius: var(--space-1);
+        outline: 2px solid var(--accent-primary);
+        outline-offset: 2px;
       }
 
       /* Enhanced Reduced Motion and Accessibility Support (T026) */
